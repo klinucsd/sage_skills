@@ -7,32 +7,39 @@ description: "Download Sentinel-2 L2A multispectral imagery from Microsoft Plane
 
 Searches the `sentinel-2-l2a` collection on Microsoft Planetary Computer for
 scenes intersecting a bounding box and time period, filters by cloud cover,
-takes the N most recent scenes, windows each to the bbox, resamples to a
-target resolution, and computes a per-band **nanmedian composite**. Output is
-a single multiband GeoTIFF in the first scene's UTM CRS.
+takes the N most recent scenes, windows each to the bbox in its native UTM,
+resamples to a target resolution, and computes a per-band **nanmedian
+composite**. Output is a single multiband GeoTIFF in the first scene's UTM
+CRS.
 
 The median composite is the right shape for downstream ML (canopy-height
 regression, land-cover classification): it suppresses per-scene cloud /
 shadow / atmospheric noise and gives a single clean reference image per
-band. For visual inspection of a single date you can pass `max_scenes=1`.
+band. For visual inspection of a single date pass `max_scenes=1`.
+
+## Dependencies
+
+```
+pip install pystac-client planetary-computer rasterio scipy
+```
 
 ## Importing the helper
 
+The helper module `sentinel2_l2a.py` lives next to this SKILL.md. Add the
+skill directory to `sys.path` before importing:
+
 ```python
 import sys
-sys.path.insert(0, "/home/jovyan/.deepagents/agent/skills/sentinel2-l2a")
+sys.path.insert(0, "/absolute/path/to/this/skill/directory")
 from sentinel2_l2a import fetch_sentinel2_l2a
 ```
-
-`pystac-client`, `planetary-computer`, `rasterio`, and `scipy` are
-auto-installed on first use if not already present.
 
 ## API
 
 ```python
 fetch_sentinel2_l2a(
-    bbox,                    # (minx, miny, maxx, maxy) EPSG:4326 — read from kernel var
-    output_path,             # destination GeoTIFF path under SAGE_OUTPUT_DIR
+    bbox,                    # (minx, miny, maxx, maxy) EPSG:4326
+    output_path,             # destination GeoTIFF path
     year=None,               # convenience: full calendar year
     start_date=None,         # "YYYY-MM-DD"  — used together with end_date
     end_date=None,           # "YYYY-MM-DD"
@@ -91,11 +98,12 @@ finer alignment use `start_date` / `end_date` (e.g. `start_date="2024-06-01"`,
 import sys
 from pathlib import Path
 
-sys.path.insert(0, "/home/jovyan/.deepagents/agent/skills/sentinel2-l2a")
+# Substitute the absolute path of the directory containing this SKILL.md
+sys.path.insert(0, "/path/to/skills/sentinel2-l2a")
 from sentinel2_l2a import fetch_sentinel2_l2a
 
-bbox = globals().get("USER_BBOX")          # (minx, miny, maxx, maxy)
-output_path = Path(SAGE_OUTPUT_DIR) / "sentinel2_2024_summer.tif"
+bbox = (-122.71, 43.52, -122.56, 43.63)        # (minx, miny, maxx, maxy)
+output_path = Path("sentinel2_2024_summer.tif")
 
 fetch_sentinel2_l2a(
     bbox=bbox,
@@ -121,9 +129,12 @@ with rasterio.open(output_path) as src:
 
 ## Execution rules
 
-- Save your script to a `.py` file with `write_file`, then run it with `python /path/to/script.py`. Never use heredoc. Never chain commands with `&&`.
-- Always read the bbox from the kernel variable (e.g. `globals().get("USER_BBOX")`). Do NOT hardcode coordinates.
-- The output GeoTIFF path must be under `SAGE_OUTPUT_DIR`. Use a descriptive filename (e.g. `sentinel2_2024_summer.tif`).
-- Do NOT re-implement the STAC search, signing, windowing, or median composite. Call `fetch_sentinel2_l2a` and let it handle everything.
-- For canopy-height ML / vegetation analysis, prefer the default 10 bands + NDVI. Smaller band lists are fine when the user asks for "RGB only" or similar.
-- The output is in the first scene's UTM CRS, not EPSG:4326. This is intentional — pixels stay aligned to the sensor grid. Reproject downstream if you need a different CRS.
+- Save your script to a `.py` file, then run it with `python /path/to/script.py`.
+- Pick a descriptive output filename (e.g. `sentinel2_2024_summer.tif`).
+- Do NOT re-implement the STAC search, signing, windowing, or median composite.
+  Call `fetch_sentinel2_l2a` and let it handle everything.
+- For canopy-height ML / vegetation analysis, prefer the default 10 bands + NDVI.
+  Smaller band lists are fine when the user asks for "RGB only" or similar.
+- The output is in the first scene's UTM CRS, not EPSG:4326. This is
+  intentional — pixels stay aligned to the sensor grid. Reproject downstream
+  if you need a different CRS.
