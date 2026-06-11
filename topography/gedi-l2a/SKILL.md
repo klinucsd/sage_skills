@@ -19,10 +19,13 @@ quality_flag == 1  AND  degrade_flag == 0  AND  0 < rh98 < 130 m
 ## Installing dependencies
 
 Install `earthaccess`, `h5py`, and `python-dotenv` using ARGUS's kernel-aware
-helper. This handles sys.path correctly on every host (NRP JupyterHub,
-Google Colab, localhost):
+helper. On Colab, `--user` installs land under `~/.local/...`, which is not
+always on `sys.path` for subprocess scripts — guard against that by adding
+the user site-packages directory before importing the newly-installed libs:
 
 ```python
+import sys, site
+sys.path.insert(0, site.getusersitepackages())
 _sage_pip_install("earthaccess", "h5py", "python-dotenv")
 ```
 
@@ -126,9 +129,10 @@ if not earthdata_user or not earthdata_pass:
 ## Full example
 
 ```python
-import os, sys
+import os, sys, site
 from pathlib import Path
 
+sys.path.insert(0, site.getusersitepackages())
 _sage_pip_install("earthaccess", "h5py", "python-dotenv")
 
 sys.path.insert(0, os.path.expanduser("~/.deepagents/agent/skills/gedi-l2a"))
