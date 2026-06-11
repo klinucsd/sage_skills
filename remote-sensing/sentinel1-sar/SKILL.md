@@ -21,23 +21,29 @@ median composite (VV, VH) saved as a single GeoTIFF.
 Together with Sentinel-2 spectral bands, SAR typically lifts canopy-height
 R² from ~0.1 to ~0.3-0.4 for forested regions.
 
+## Dependencies
+
+```
+pip install pystac-client planetary-computer rasterio scipy
+```
+
 ## Importing the helper
+
+The helper module `sentinel1_sar.py` lives next to this SKILL.md. Add the
+skill directory to `sys.path` before importing:
 
 ```python
 import sys
-sys.path.insert(0, "/home/jovyan/.deepagents/agent/skills/sentinel1-sar")
+sys.path.insert(0, "/absolute/path/to/this/skill/directory")
 from sentinel1_sar import fetch_sentinel1_sar
 ```
-
-`pystac-client`, `planetary-computer`, `rasterio`, and `scipy` are
-auto-installed on first use if not already present.
 
 ## API
 
 ```python
 fetch_sentinel1_sar(
     bbox,                        # (minx, miny, maxx, maxy) EPSG:4326
-    output_path,                 # destination GeoTIFF under SAGE_OUTPUT_DIR
+    output_path,                 # destination GeoTIFF path
     year=None,                   # convenience: full calendar year
     start_date=None,             # "YYYY-MM-DD"
     end_date=None,               # "YYYY-MM-DD"
@@ -81,11 +87,12 @@ sensitive than optical, so a wider window (full year) also works.
 import sys
 from pathlib import Path
 
-sys.path.insert(0, "/home/jovyan/.deepagents/agent/skills/sentinel1-sar")
+# Substitute the absolute path of the directory containing this SKILL.md
+sys.path.insert(0, "/path/to/skills/sentinel1-sar")
 from sentinel1_sar import fetch_sentinel1_sar
 
-bbox = globals().get("USER_BBOX")
-output_path = Path(SAGE_OUTPUT_DIR) / "sentinel1_2024_summer.tif"
+bbox = (-122.71, 43.52, -122.56, 43.63)        # (minx, miny, maxx, maxy)
+output_path = Path("sentinel1_2024_summer.tif")
 
 fetch_sentinel1_sar(
     bbox=bbox,
@@ -121,9 +128,13 @@ have missing CRS, which the helper fills in from the bbox center's UTM zone.
 
 ## Execution rules
 
-- Save your script to a `.py` file with `write_file`, then run it with `python /path/to/script.py`. Never use heredoc. Never chain commands with `&&`.
-- Always read the bbox from the kernel variable (e.g. `globals().get("USER_BBOX")`). Do NOT hardcode coordinates.
-- The output GeoTIFF path must be under `SAGE_OUTPUT_DIR`. Use a descriptive filename (e.g. `sentinel1_2024_summer.tif`).
-- Do NOT re-implement the STAC search or median composite. Call `fetch_sentinel1_sar` and let it handle everything.
-- The output is in UTM (or whichever scene CRS), NOT EPSG:4326. For pairing with Sentinel-2, the natural workflow is to reproject S1 to the S2 grid at feature-extraction or prediction time using `rasterio.warp.reproject` with `Resampling.bilinear`.
-- For ML feature engineering, consider converting linear backscatter to dB downstream: `db = 10 * np.log10(linear + 1e-10)`.
+- Save your script to a `.py` file, then run it with `python /path/to/script.py`.
+- Pick a descriptive output filename (e.g. `sentinel1_2024_summer.tif`).
+- Do NOT re-implement the STAC search or median composite. Call
+  `fetch_sentinel1_sar` and let it handle everything.
+- The output is in UTM (or whichever scene CRS), NOT EPSG:4326. For pairing
+  with Sentinel-2, the natural workflow is to reproject S1 to the S2 grid at
+  feature-extraction or prediction time using `rasterio.warp.reproject` with
+  `Resampling.bilinear`.
+- For ML feature engineering, consider converting linear backscatter to dB
+  downstream: `db = 10 * np.log10(linear + 1e-10)`.

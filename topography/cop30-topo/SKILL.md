@@ -50,23 +50,29 @@ Then either:
 
 2. **Pass it explicitly** via the `api_key=` parameter.
 
+## Dependencies
+
+```
+pip install requests rasterio python-dotenv
+```
+
 ## Importing the helper
+
+The helper module `cop30_topo.py` lives next to this SKILL.md. Add the
+skill directory to `sys.path` before importing:
 
 ```python
 import sys
-sys.path.insert(0, "/home/jovyan/.deepagents/agent/skills/cop30-topo")
+sys.path.insert(0, "/absolute/path/to/this/skill/directory")
 from cop30_topo import fetch_cop30_topo
 ```
-
-`requests` and `rasterio` are auto-installed on first use if not already
-present.
 
 ## API
 
 ```python
 fetch_cop30_topo(
     bbox,                # (minx, miny, maxx, maxy) EPSG:4326
-    output_path,         # destination GeoTIFF under SAGE_OUTPUT_DIR
+    output_path,         # destination GeoTIFF path
     demtype="COP30",     # "COP30" | "SRTMGL1" | "SRTMGL3" | "AW3D30"
     api_key=None,        # falls back to OPENTOPOGRAPHY_API_KEY env var
     target_crs=None,     # output CRS; default = local UTM zone from bbox center
@@ -116,29 +122,43 @@ slope, aspect are continuous fields).
 
 ## Loading credentials
 
+Read `OPENTOPOGRAPHY_API_KEY` from `.env` or the process environment.
+Never print the API key value.
+
 ```python
 import os
-from dotenv import load_dotenv
-load_dotenv("/home/jovyan/work/_User-Persistent-Storage_CephBlock_/.env")
-# fetch_cop30_topo will read OPENTOPOGRAPHY_API_KEY from the environment
+try:
+    from dotenv import load_dotenv
+    if os.path.exists(".env"):
+        load_dotenv(".env")
+except ImportError:
+    pass
+api_key = os.environ.get("OPENTOPOGRAPHY_API_KEY")
 ```
 
-Never print the API key value.
+If the env var is missing, the helper raises a clear error pointing at
+`portal.opentopography.org`.
 
 ## Full example
 
 ```python
-import sys, os
+import os, sys
 from pathlib import Path
-from dotenv import load_dotenv
 
-sys.path.insert(0, "/home/jovyan/.deepagents/agent/skills/cop30-topo")
+# Substitute the absolute path of the directory containing this SKILL.md
+sys.path.insert(0, "/path/to/skills/cop30-topo")
 from cop30_topo import fetch_cop30_topo
 
-load_dotenv("/home/jovyan/work/_User-Persistent-Storage_CephBlock_/.env")
+# Load credentials
+try:
+    from dotenv import load_dotenv
+    if os.path.exists(".env"):
+        load_dotenv(".env")
+except ImportError:
+    pass
 
-bbox = globals().get("USER_BBOX")
-output_path = Path(SAGE_OUTPUT_DIR) / "topo_cop30.tif"
+bbox = (-122.71, 43.52, -122.56, 43.63)        # (minx, miny, maxx, maxy)
+output_path = Path("topo_cop30.tif")
 
 fetch_cop30_topo(
     bbox=bbox,
@@ -165,10 +185,15 @@ with rasterio.open(output_path) as src:
 
 ## Execution rules
 
-- Save your script to a `.py` file with `write_file`, then run it with `python /path/to/script.py`. Never use heredoc. Never chain commands with `&&`.
-- Always read the bbox from the kernel variable (e.g. `globals().get("USER_BBOX")`). Do NOT hardcode coordinates.
-- Always load the OpenTopography key via `dotenv.load_dotenv()`. Do NOT hardcode or print the API key.
-- The output GeoTIFF path must be under `SAGE_OUTPUT_DIR`. Use a descriptive filename (e.g. `topo_cop30.tif`).
-- Do NOT re-implement the OpenTopography request, reprojection, or slope/aspect math. Call `fetch_cop30_topo` and let it handle everything.
-- The output CRS is UTM (not EPSG:4326). When pairing with Sentinel-2 / Sentinel-1, reproject this file to the S2 grid using `rasterio.warp.reproject` with `Resampling.bilinear`.
-- Slope is in degrees (0–90), aspect in degrees (0–360, 0=North, clockwise). For ML features, aspect is often more useful when decomposed: `sin(aspect)` and `cos(aspect)` so 0° and 360° are treated as the same direction.
+- Save your script to a `.py` file, then run it with `python /path/to/script.py`.
+- Always load the OpenTopography key via `dotenv.load_dotenv()` or read from
+  the process environment. Do NOT hardcode or print the API key.
+- Pick a descriptive output filename (e.g. `topo_cop30.tif`).
+- Do NOT re-implement the OpenTopography request, reprojection, or
+  slope/aspect math. Call `fetch_cop30_topo` and let it handle everything.
+- The output CRS is UTM (not EPSG:4326). When pairing with Sentinel-2 /
+  Sentinel-1, reproject this file to the S2 grid using
+  `rasterio.warp.reproject` with `Resampling.bilinear`.
+- Slope is in degrees (0–90), aspect in degrees (0–360, 0=North, clockwise).
+  For ML features, aspect is often more useful when decomposed: `sin(aspect)`
+  and `cos(aspect)` so 0° and 360° are treated as the same direction.

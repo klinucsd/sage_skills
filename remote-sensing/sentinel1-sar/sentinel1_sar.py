@@ -19,42 +19,17 @@ saturates spectrally.
 
 from __future__ import annotations
 
-import os
-import subprocess
-import sys
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
 
-
-def _ensure_deps() -> None:
-    missing = []
-    for pkg, imp in [
-        ("pystac-client", "pystac_client"),
-        ("planetary-computer", "planetary_computer"),
-        ("rasterio", "rasterio"),
-        ("scipy", "scipy"),
-    ]:
-        try:
-            __import__(imp)
-        except ImportError:
-            missing.append(pkg)
-    if missing:
-        print(f"[sentinel1-sar] installing: {' '.join(missing)}")
-        subprocess.check_call(
-            [sys.executable, "-m", "pip", "install", "-q", *missing]
-        )
-
-
-_ensure_deps()
-
-import numpy as np                 # noqa: E402
-import planetary_computer          # noqa: E402
-import pystac_client               # noqa: E402
-import rasterio                    # noqa: E402
-from pyproj import CRS             # noqa: E402
-from rasterio.warp import transform_bounds          # noqa: E402
-from rasterio.windows import from_bounds as window_from_bounds  # noqa: E402
-from scipy.ndimage import zoom    # noqa: E402
+import numpy as np
+import planetary_computer
+import pystac_client
+import rasterio
+from pyproj import CRS
+from rasterio.warp import transform_bounds
+from rasterio.windows import from_bounds as window_from_bounds
+from scipy.ndimage import zoom
 
 
 _STAC_URL = "https://planetarycomputer.microsoft.com/api/stac/v1"

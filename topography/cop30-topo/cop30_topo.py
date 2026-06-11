@@ -29,38 +29,16 @@ Output is a 3-band GeoTIFF: elevation (m), slope (degrees), aspect
 from __future__ import annotations
 
 import os
-import subprocess
-import sys
 import tempfile
 from pathlib import Path
 
-
-def _ensure_deps() -> None:
-    missing = []
-    for pkg, imp in [
-        ("requests", "requests"),
-        ("rasterio", "rasterio"),
-    ]:
-        try:
-            __import__(imp)
-        except ImportError:
-            missing.append(pkg)
-    if missing:
-        print(f"[cop30-topo] installing: {' '.join(missing)}")
-        subprocess.check_call(
-            [sys.executable, "-m", "pip", "install", "-q", *missing]
-        )
-
-
-_ensure_deps()
-
-import numpy as np                                                         # noqa: E402
-import rasterio                                                            # noqa: E402
-import requests                                                            # noqa: E402
-from pyproj import CRS                                                     # noqa: E402
-from rasterio.enums import Resampling                                      # noqa: E402
-from rasterio.transform import from_bounds as transform_from_bounds        # noqa: E402
-from rasterio.warp import reproject, transform_bounds                      # noqa: E402
+import numpy as np
+import rasterio
+import requests
+from pyproj import CRS
+from rasterio.enums import Resampling
+from rasterio.transform import from_bounds as transform_from_bounds
+from rasterio.warp import reproject, transform_bounds
 
 
 _OPENTOPO_URL = "https://portal.opentopography.org/API/globaldem"
