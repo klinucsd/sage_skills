@@ -456,18 +456,12 @@ The service caps each response at 2000 records, but the underlying dataset has ~
 - **Numeric comparisons** for `activity_quantity`: `"activity_quantity > 100"`
 - **All records**: `"1=1"` (use with a tighter bbox to avoid pulling all 168K records)
 
-### Saving Output for Sage Display
+### Saving Output
 
-When running inside Sage, save the queried GeoDataFrame as a GeoJSON file in `SAGE_OUTPUT_DIR`, then reference it in your markdown report using the standard `![Title](path/to/file.geojson)` map tag (see Sage's MAP RULE in the system prompt for combining layers).
+Save the queried GeoDataFrame as a GeoJSON file at a path of your choice:
 
 ```python
-import os
-
-outdir = globals().get("SAGE_OUTPUT_DIR", "/tmp")
-os.makedirs(outdir, exist_ok=True)
-
-# After the GeoDataFrame `df` is built:
-out_path = os.path.join(outdir, "ca_vegetation_treatments.geojson")
+out_path = "ca_vegetation_treatments.geojson"
 df.to_file(out_path, driver="GeoJSON")
 print(f"Saved {len(df)} records → {out_path}")
 ```
@@ -488,7 +482,7 @@ colormap = {
         "TREE_PLNTING": "#bebada",  # purple — Tree Planting
     },
 }
-with open(os.path.join(outdir, "ca_vegetation_treatments.colormap.json"), "w") as f:
+with open("ca_vegetation_treatments.colormap.json", "w") as f:
     json.dump(colormap, f, indent=2)
 ```
 

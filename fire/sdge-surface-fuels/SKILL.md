@@ -15,9 +15,7 @@ Displays surface fuel model and live fuel moisture layers for Southern Californi
 ## Display Surface Fuel Model Map
 
 ```python
-import json, os
-
-output_dir = os.environ.get('SAGE_OUTPUT_DIR', '/tmp')
+import json
 
 wms = {
     "url": "https://sdge.sdsc.edu/geoserver/ows",
@@ -26,7 +24,7 @@ wms = {
     "opacity": 0.75,
     "bbox": [32.0, -118.5, 34.5, -115.5]
 }
-wms_path = os.path.join(output_dir, "surface_fuels.wms.json")
+wms_path = "surface_fuels.wms.json"
 with open(wms_path, "w") as f:
     json.dump(wms, f)
 print(f"Surface fuel model layer saved: {wms_path}")
@@ -35,9 +33,7 @@ print(f"Surface fuel model layer saved: {wms_path}")
 ## Display Live Fuel Moisture Map
 
 ```python
-import json, os
-
-output_dir = os.environ.get('SAGE_OUTPUT_DIR', '/tmp')
+import json
 
 wms = {
     "url": "https://sdge.sdsc.edu/geoserver/ows",
@@ -46,7 +42,7 @@ wms = {
     "opacity": 0.75,
     "bbox": [32.0, -118.5, 34.5, -115.5]
 }
-wms_path = os.path.join(output_dir, "live_fuel_moisture.wms.json")
+wms_path = "live_fuel_moisture.wms.json"
 with open(wms_path, "w") as f:
     json.dump(wms, f)
 print(f"Live fuel moisture layer saved: {wms_path}")
