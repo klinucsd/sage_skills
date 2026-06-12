@@ -38,73 +38,55 @@ PDAL is a native C++ library: `pip install python-pdal` (or `pyforestscan`,
 which depends on it) tries to build from source and FAILS unless PDAL headers
 and the shared library are already present.
 
-### Google Colab — run this FIRST, before any skill script
+### Google Colab — install + script template
 
-Colab does NOT have PDAL pre-installed. The reliable path uses `apt` for
-both PDAL and its Python bindings (so they land system-wide on the default
-`sys.path`), plus `pip` for the remaining pure-Python deps. Run this in a
-**regular Python code cell** (NOT inside a `%%ask` cell) before any lidar
-work:
+Colab does NOT have PDAL pre-installed. Before importing the helper or
+running any lidar script, you (the agent) need to:
 
-```python
-# Native PDAL library + Python bindings (system-wide via apt — on default sys.path)
-!apt-get install -y libpdal-dev pdal python3-pdal
+**1. Install PDAL via apt and the Python deps via pip:**
 
-# Pure-Python deps (go to --user; user-site is added to sys.path below)
-!pip install pyforestscan laspy lazrs geopandas pyproj rasterio
-
-# Add user site-packages to this kernel's sys.path so the pip --user
-# installs are importable from subprocess scripts.
-import sys, site
-sys.path.insert(0, site.getusersitepackages())
-
-import pdal, pyforestscan, laspy
-print("PDAL", pdal.__version__, "| pyforestscan", pyforestscan.__version__)
+```bash
+apt-get install -y libpdal-dev pdal python3-pdal
+pip install pyforestscan laspy lazrs geopandas pyproj rasterio
 ```
 
-The `apt-get` step takes ~30 s (Colab grants sudo for apt). The `pip` step
-takes ~1-2 min. The final `import` line confirms everything is wired up.
+`apt-get` installs PDAL system-wide (Colab grants sudo for apt). The Python
+binding `python3-pdal` lands at `/usr/lib/python3/dist-packages/`, which IS
+on every subprocess Python's default `sys.path`. The pip deps land in
+`~/.local/lib/python3.12/site-packages/` (Colab installs to user-site by
+default), which is NOT on subprocess sys.path — handle that in step 2.
 
-**Why this exact sequence:**
-- `apt-get install python3-pdal` installs PDAL's Python bindings to
-  `/usr/lib/python3/dist-packages/`, which IS on every subprocess Python's
-  default `sys.path`. Using `pip install python-pdal` instead would land
-  in user-site and require the sys.path workaround for `import pdal` too.
-- `pyforestscan`, `laspy`, etc. aren't in apt, so pip is the only option.
-  They land in `~/.local/lib/python3.12/site-packages/` and need the
-  `sys.path.insert(0, site.getusersitepackages())` line to be importable.
+These commands are idempotent — re-running them is a fast no-op if the
+packages are already installed, so it's safe to put them at the start of
+the first lidar cell each session.
 
-### COLAB SCRIPT TEMPLATE — start every lidar script with these lines
+**2. Start every lidar script with the user-site sys.path line:**
 
 ```python
-# Required for Colab: add --user pip installs to sys.path so they're importable
 import sys, site
 sys.path.insert(0, site.getusersitepackages())
 ```
 
-These two lines MUST be the first import block in every Colab script that
-imports `pyforestscan`, `laspy`, etc. Without them you get
-`ModuleNotFoundError: pyforestscan` even though `pip show pyforestscan`
-confirms it's installed.
+This must be the FIRST import block in every script that uses pyforestscan
+or laspy. Without it the import fails with `ModuleNotFoundError`, even
+though `pip show pyforestscan` confirms it's installed.
 
-### Anti-spiral guidance
+### Anti-spiral guidance for Colab
 
-If your script fails with `ModuleNotFoundError: pdal` or
-`ModuleNotFoundError: pyforestscan` after the setup cell above, the cause
+If `import pdal` or `import pyforestscan` fails in your script, the cause
 is ALMOST ALWAYS one of:
 
-1. **You forgot the `sys.path.insert(0, site.getusersitepackages())` line
-   at the top of the script.** Add it and re-run.
-2. **The apt setup cell wasn't run.** Re-run the install cell.
+1. **The sys.path line is missing from the script top.** Add it and re-run.
+2. **The apt-get step hasn't run yet.** Run it once at the start of work.
 
 The cause is NEVER:
 - A wrong PDAL version → do NOT try `pip install PDAL==3.4.5`, `==2.6.2`,
-  or other pinned versions. PyPI's PDAL package matches whatever PDAL apt
+  or other pinned versions. PyPI's PDAL matches whatever PDAL apt
   installed; pinning a different version creates ABI mismatches.
 - Capitalisation → `pip install pdal` and `pip install PDAL` install the
   same package. Don't iterate on this.
-- Missing `python-pdal` → apt's `python3-pdal` provides the binding. Do
-  NOT `pip install python-pdal` — that's the wrong package.
+- Missing `python-pdal` from pip → apt's `python3-pdal` provides the
+  binding. Do NOT `pip install python-pdal` — that's the wrong path.
 
 If apt + pip + sys.path haven't fixed it after one attempt, STOP and tell
 the user. Don't try 15 variations of `pip install`.
