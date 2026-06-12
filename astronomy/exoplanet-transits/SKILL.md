@@ -6,26 +6,24 @@ description: "Exoplanet transit data from NASA. Use when the user wants to: fetc
 # exoplanet-transits — Data Skill
 
 This skill provides **data only** — fetching from NASA APIs, processing photometry,
-and computing transit parameters. It contains no dropdowns, widgets, or display
-logic and has no agent-runtime dependencies — usable from any Python environment.
+and computing transit parameters. It contains no UI logic and has no agent-runtime
+dependencies — usable from any Python environment.
 
-## Required libraries
+## Dependencies
 
-`lightkurve` and `astropy` are **not** pre-installed in the Sage image. Install
-once at the top of the first script in a session (no-op if already installed):
-
-```python
-import subprocess, sys
-subprocess.check_call([sys.executable, "-m", "pip", "install", "-q", "lightkurve", "astropy"])
 ```
+pip install lightkurve astropy requests
+```
+
+(Some hosts pre-install `requests`; `lightkurve` and `astropy` are typically not.)
 
 ---
 
 ## Execution rules — read before writing any code
 
-- Save every script to a `.py` file with `write_file`, then run it with `python /path/to/script.py`. Never use heredoc (`python << 'EOF'`). Never chain commands with `&&`.
-- Never call `plt.show()` in scripts. Save to a PNG with `plt.savefig(...)` and print the path. Do NOT call `display(Image(path))` — Sage renders images once when your chat reply contains `![](path)`.
-- Read existing kernel variables via `globals().get("VAR_NAME")`. The system prompt's `EXISTING KERNEL VARIABLES` block tells you what's already set by previous cells.
+- Save every script to a `.py` file, then run it with `python /path/to/script.py`. Never use heredoc (`python << 'EOF'`). Never chain commands with `&&`.
+- Never call `plt.show()` in scripts. Save to a PNG with `plt.savefig(...)` and print the path.
+- Steps 2-4 below each have an "Inputs" section listing the values they need (planet name, period, etc.). Set those values at the top of your script — either by combining all steps into one script (simplest), or by carrying values across separate scripts via your framework's variable-passing mechanism.
 
 ---
 
@@ -45,9 +43,6 @@ Each item has these keys: `pl_name`, `hostname`, `pl_orbper` (orbital period, da
 Items are sorted alphabetically by `pl_name`.
 
 ```python
-import subprocess, sys
-subprocess.check_call([sys.executable, "-m", "pip", "install", "-q", "lightkurve", "astropy"])
-
 import requests
 
 # Fallback list of well-known bright transiting exoplanets, used if the NASA
@@ -93,58 +88,54 @@ planets = sorted(planets, key=lambda p: p["pl_name"])
 print(f"Catalog ready: {len(planets)} entries (sorted by planet name).")
 ```
 
-After this script runs, `planets` is in the kernel namespace.
+After this script runs, `planets` holds the catalog. Pick a planet (interactively,
+by name, or by index) and extract the fields Steps 2-4 need:
 
-Steps 2–4 below read these kernel variables for the chosen planet (set them
-however your agent prefers — direct assignment, an interactive picker, etc.):
+```python
+chosen = planets[0]                       # or whichever row matches the user's choice
+target_planet  = chosen["pl_name"]        # planet name
+target_star    = chosen["hostname"]       # host star name
+orbital_period = chosen["pl_orbper"]      # orbital period in days
+planet_data    = chosen                   # full record, used in the summary card
+```
 
-| Variable              | Source field (from a `planets` row) | Description |
-|-----------------------|-------------------------------------|-------------|
-| `TARGET_PLANET`       | `pl_name`                           | Planet name |
-| `TARGET_STAR`         | `hostname`                          | Host star name |
-| `ORBITAL_PERIOD_DAYS` | `pl_orbper`                         | Orbital period in days |
-| `PLANET_DATA`         | full row dict                       | Full record for the selected planet |
-
-If you pick different names, Steps 2–4 below need to be updated to read those
-names instead.
+Use these variable names in Steps 2-4 below, or rename them and update the
+references consistently.
 
 ---
 
 ## Step 2 — Download a TESS / Kepler light curve
 
-Reads from kernel namespace: `TARGET_STAR`, `TARGET_PLANET` (for plot title),
-`ORBITAL_PERIOD_DAYS` (only the existence of `TARGET_STAR` is required to run).
+**Inputs** (set at top of script, from Step 1):
+- `target_star` — host star name (e.g. `"HD 209458"`)
+- `target_planet` — planet name for plot titles (e.g. `"HD 209458 b"`)
 
-Writes to kernel namespace: `lc` (lightkurve LightCurve), `lc_mission` (str).
+**Outputs:** `lc` (lightkurve `LightCurve`), `lc_mission` (str). Saves `lc_raw.csv`
+and `lc_raw.png`.
 
 ```python
 import lightkurve as lk
 import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
-import warnings, os
+import warnings
 warnings.filterwarnings("ignore")
 
-star   = globals().get("TARGET_STAR")
-planet = globals().get("TARGET_PLANET", star)
+# Set from your Step 1 selection
+target_star   = "HD 209458"
+target_planet = "HD 209458 b"
 
-if not star:
-    raise RuntimeError("TARGET_STAR not set — run Step 1 / select a planet first")
-
-outdir = globals().get("SAGE_OUTPUT_DIR", "/tmp")
-os.makedirs(outdir, exist_ok=True)
-
-print(f"Searching NASA MAST for {star} light curves...")
-result  = lk.search_lightcurve(star, mission="TESS", exptime="short")
+print(f"Searching NASA MAST for {target_star} light curves...")
+result  = lk.search_lightcurve(target_star, mission="TESS", exptime="short")
 mission = "TESS"
 if len(result) == 0:
-    result, mission = lk.search_lightcurve(star, mission="Kepler", exptime="short"), "Kepler"
+    result, mission = lk.search_lightcurve(target_star, mission="Kepler", exptime="short"), "Kepler"
 if len(result) == 0:
-    result, mission = lk.search_lightcurve(star), "any"
+    result, mission = lk.search_lightcurve(target_star), "any"
 
 print(f"Found {len(result)} sector(s) — mission: {mission}")
 if len(result) == 0:
-    raise RuntimeError(f"No light curves found for {star} on NASA MAST")
+    raise RuntimeError(f"No light curves found for {target_star} on NASA MAST")
 
 n_dl = min(3, len(result))
 lc_coll = result[:n_dl].download_all()
@@ -154,81 +145,74 @@ lc = lc_coll.stitch() if isinstance(lc_coll, LightCurveCollection) else lc_coll
 lc = lc.normalize().remove_outliers(sigma=5)
 print(f"Light curve: {len(lc):,} points spanning "
       f"{lc.time.value[-1] - lc.time.value[0]:.1f} days")
+lc_mission = mission
 
-csv_path = os.path.join(outdir, "lc_raw.csv")
+csv_path = "lc_raw.csv"
 lc.to_pandas().to_csv(csv_path, index=False)
 print(f"Saved raw light curve → {csv_path}")
-
-globals()["lc"]         = lc
-globals()["lc_mission"] = mission
 
 fig, ax = plt.subplots(figsize=(12, 3))
 ax.plot(lc.time.value, lc.flux.value, "k.", ms=0.8, alpha=0.35, rasterized=True)
 ax.set_xlabel("Time (BTJD days)")
 ax.set_ylabel("Normalized Flux")
-ax.set_title(f"{planet} — Raw {mission} Light Curve ({len(lc):,} points)")
+ax.set_title(f"{target_planet} — Raw {mission} Light Curve ({len(lc):,} points)")
 ax.set_ylim(
     float(lc.flux.value.mean()) - 5 * float(lc.flux.value.std()),
     float(lc.flux.value.mean()) + 5 * float(lc.flux.value.std()),
 )
 plt.tight_layout()
-plot_path = os.path.join(outdir, "lc_raw.png")
-plt.savefig(plot_path, dpi=150, bbox_inches="tight")
+plt.savefig("lc_raw.png", dpi=150, bbox_inches="tight")
 plt.close()
-print(f"Saved plot → {plot_path}")
+print("Saved plot → lc_raw.png")
 ```
+
+If you run Steps 3-4 as separate scripts/processes, persist `lc` to disk
+(`lc.write("lc.fits")` then `lc = lk.read("lc.fits")` in the next step), or
+combine Steps 2-4 into a single script so `lc` stays a local variable.
 
 ---
 
 ## Step 3 — Phase-fold the light curve
 
-Reads: `lc`, `ORBITAL_PERIOD_DAYS`. Writes: `TRANSIT_DEPTH`, `TRANSIT_DURATION_DAYS`, `RP_RS`.
+**Inputs** (set at top of script):
+- `lc` — the `LightCurve` from Step 2
+- `orbital_period` — orbital period in days (from Step 1)
+- `target_planet` — for plot titles
 
-**Critical rules:**
-- Read `lc` from `globals()` — never re-read `lc_raw.csv`.
-- Read `ORBITAL_PERIOD_DAYS` from `globals()` — never hardcode the period.
-- Use `lc.fold(period=period)` from lightkurve — do not re-implement phase folding.
+**Outputs:** `transit_depth`, `transit_duration` (days), `rp_rs`. Saves `lc_folded.png`.
+
+**Critical rule:** use `lc.fold(period=orbital_period)` from lightkurve — do
+not re-implement phase folding.
 
 ```python
 import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 import numpy as np
-import os, warnings
+import warnings
 warnings.filterwarnings("ignore")
 
-lc     = globals().get("lc")
-period = globals().get("ORBITAL_PERIOD_DAYS")
-planet = globals().get("TARGET_PLANET", "unknown planet")
+# Inputs — carry `lc` from Step 2, set the rest from Step 1
+# lc = <LightCurve from Step 2>
+target_planet  = "HD 209458 b"
+orbital_period = 3.52474       # days, from planets[i]["pl_orbper"]
 
-if lc is None:
-    raise RuntimeError("lc not found — run Step 2 first")
-if period is None:
-    raise RuntimeError("ORBITAL_PERIOD_DAYS not set — select a planet first")
+print(f"Phase-folding {target_planet} at P = {orbital_period:.4f} days...")
 
-outdir = globals().get("SAGE_OUTPUT_DIR", "/tmp")
-os.makedirs(outdir, exist_ok=True)
-
-print(f"Phase-folding {planet} at P = {period:.4f} days...")
-
-folded = lc.fold(period=period)
+folded = lc.fold(period=orbital_period)
 binned = folded.bin(time_bin_size=0.004)
 flux_arr = np.array(binned.flux.value, dtype=float)
 time_arr = np.array(binned.time.value, dtype=float)
 
-depth    = float(1.0 - np.nanmin(flux_arr))
-floor    = 1.0 - 0.5 * depth
-in_tr    = flux_arr < floor
-duration = float(np.sum(in_tr) * 0.004 * period) if np.any(in_tr) else float("nan")
-rp_rs    = float(np.sqrt(max(depth, 0.0)))
+transit_depth    = float(1.0 - np.nanmin(flux_arr))
+floor            = 1.0 - 0.5 * transit_depth
+in_tr            = flux_arr < floor
+transit_duration = float(np.sum(in_tr) * 0.004 * orbital_period) if np.any(in_tr) else float("nan")
+rp_rs            = float(np.sqrt(max(transit_depth, 0.0)))
 
-print(f"Transit depth:     {depth*100:.4f}%")
-print(f"Transit duration:  {duration*24:.2f} h")
+print(f"Transit depth:     {transit_depth*100:.4f}%")
+print(f"Transit duration:  {transit_duration*24:.2f} h")
 print(f"Rp/Rs estimate:    {rp_rs:.4f}")
-
-globals()["TRANSIT_DEPTH"]         = depth
-globals()["TRANSIT_DURATION_DAYS"] = duration
-globals()["RP_RS"]                 = rp_rs
 
 fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(14, 4))
 ax1.plot(np.array(folded.time.value), np.array(folded.flux.value),
@@ -236,36 +220,41 @@ ax1.plot(np.array(folded.time.value), np.array(folded.flux.value),
 ax1.plot(time_arr, flux_arr, "r-", lw=1.8, label="Binned (0.4% phase)")
 ax1.set_xlabel("Phase (days from transit center)")
 ax1.set_ylabel("Normalized Flux")
-ax1.set_title(f"{planet} — Phase-Folded Light Curve")
+ax1.set_title(f"{target_planet} — Phase-Folded Light Curve")
 ax1.legend(fontsize=8)
 
-zoom_half = max(3 * duration, 0.05 * period) if not np.isnan(duration) else 0.1 * period
+zoom_half = max(3 * transit_duration, 0.05 * orbital_period) if not np.isnan(transit_duration) else 0.1 * orbital_period
 mask = np.abs(time_arr) < zoom_half
 if np.sum(mask) > 4:
     ax2.plot(time_arr[mask] * 24, flux_arr[mask], "r.-", lw=1.5, ms=4)
     ax2.set_xlabel("Hours from transit center")
     ax2.set_ylabel("Normalized Flux")
-    ax2.set_title(f"Transit Zoom — depth={depth*100:.3f}%, ~{duration*24:.1f} h")
-    ax2.axhline(1.0,         color="gray",   ls="--", lw=0.8)
-    ax2.axhline(1.0 - depth, color="orange", ls="--", lw=1.0,
-                label=f"Depth = {depth*100:.3f}%")
+    ax2.set_title(f"Transit Zoom — depth={transit_depth*100:.3f}%, ~{transit_duration*24:.1f} h")
+    ax2.axhline(1.0,                  color="gray",   ls="--", lw=0.8)
+    ax2.axhline(1.0 - transit_depth,  color="orange", ls="--", lw=1.0,
+                label=f"Depth = {transit_depth*100:.3f}%")
     ax2.legend(fontsize=8)
 else:
     ax2.text(0.5, 0.5, "Insufficient data\nfor zoom",
              ha="center", va="center", transform=ax2.transAxes)
 
 plt.tight_layout()
-plot_path = os.path.join(outdir, "lc_folded.png")
-plt.savefig(plot_path, dpi=150, bbox_inches="tight")
+plt.savefig("lc_folded.png", dpi=150, bbox_inches="tight")
 plt.close()
-print(f"Saved plot → {plot_path}")
+print("Saved plot → lc_folded.png")
 ```
 
 ---
 
 ## Step 4 — Transit summary card
 
-Reads: `lc`, `ORBITAL_PERIOD_DAYS`, `TRANSIT_DEPTH`, `TRANSIT_DURATION_DAYS`, `RP_RS`, `PLANET_DATA`.
+**Inputs** (set at top of script):
+- `lc` — the `LightCurve` from Step 2
+- `target_planet`, `target_star` — names for labels
+- `orbital_period` — from Step 1
+- `transit_depth`, `transit_duration`, `rp_rs` — from Step 3
+- `planet_data` — the full record from Step 1
+- `lc_mission` — from Step 2 (e.g. "TESS", "Kepler")
 
 ```python
 import matplotlib
@@ -273,25 +262,21 @@ matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 import matplotlib.gridspec as gridspec
 import numpy as np
-import os, warnings
+import warnings
 warnings.filterwarnings("ignore")
 
-planet   = globals().get("TARGET_PLANET",       "unknown")
-star     = globals().get("TARGET_STAR",         "unknown")
-period   = globals().get("ORBITAL_PERIOD_DAYS", float("nan"))
-depth    = globals().get("TRANSIT_DEPTH",       0.0)
-duration = globals().get("TRANSIT_DURATION_DAYS", float("nan"))
-rp_rs    = globals().get("RP_RS",               float("nan"))
-pd_data  = globals().get("PLANET_DATA",         {})
-lc       = globals().get("lc")
+# Inputs — carry from Steps 1, 2, 3
+# lc = <LightCurve from Step 2>
+target_planet    = "HD 209458 b"
+target_star      = "HD 209458"
+orbital_period   = 3.52474
+transit_depth    = 0.01478
+transit_duration = 0.13         # days, from Step 3
+rp_rs            = 0.1216
+planet_data      = {}           # full row from Step 1
+lc_mission       = "TESS"
 
-if lc is None:
-    raise RuntimeError("lc not found — run Steps 2 and 3 first")
-
-outdir = globals().get("SAGE_OUTPUT_DIR", "/tmp")
-os.makedirs(outdir, exist_ok=True)
-
-folded = lc.fold(period=period)
+folded = lc.fold(period=orbital_period)
 binned = folded.bin(time_bin_size=0.003)
 b_time = np.array(binned.time.value, dtype=float)
 b_flux = np.array(binned.flux.value, dtype=float)
@@ -303,34 +288,34 @@ ax = fig.add_subplot(gs[0])
 ax.plot(np.array(folded.time.value) * 24, np.array(folded.flux.value),
         ".", ms=1.2, alpha=0.2, color="steelblue")
 ax.plot(b_time * 24, b_flux, "r-", lw=2.0, zorder=5, label="Binned LC")
-xlim_h = (4 * duration * 24) if not np.isnan(duration) else (0.08 * period * 24)
+xlim_h = (4 * transit_duration * 24) if not np.isnan(transit_duration) else (0.08 * orbital_period * 24)
 ax.set_xlim(-xlim_h, xlim_h)
 ax.set_xlabel("Hours from Transit Center", fontsize=12)
 ax.set_ylabel("Normalized Flux", fontsize=12)
-ax.set_title(f"{planet} — Transit Light Curve", fontsize=13, fontweight="bold")
+ax.set_title(f"{target_planet} — Transit Light Curve", fontsize=13, fontweight="bold")
 ax.axhline(1.0, color="gray", ls="--", lw=0.8)
-if depth > 0:
-    ax.axhline(1.0 - depth, color="orange", ls="--", lw=1.2,
-               label=f"Depth = {depth*100:.3f}%")
+if transit_depth > 0:
+    ax.axhline(1.0 - transit_depth, color="orange", ls="--", lw=1.2,
+               label=f"Depth = {transit_depth*100:.3f}%")
 ax.legend(fontsize=9)
 
 ax2 = fig.add_subplot(gs[1])
 ax2.axis("off")
-vmag_str  = f"{pd_data['sy_vmag']:.1f}"   if pd_data.get("sy_vmag") else "?"
-teff_str  = f"{pd_data['st_teff']:.0f} K" if pd_data.get("st_teff") else "?"
-rad_str   = f"{pd_data['pl_rade']:.2f} R⊕" if pd_data.get("pl_rade") else "?"
-dur_str   = f"{duration*24:.2f} h" if not np.isnan(duration) else "?"
-rp_str    = f"{rp_rs:.4f}"          if not np.isnan(rp_rs)    else "?"
+vmag_str  = f"{planet_data['sy_vmag']:.1f}"   if planet_data.get("sy_vmag") else "?"
+teff_str  = f"{planet_data['st_teff']:.0f} K" if planet_data.get("st_teff") else "?"
+rad_str   = f"{planet_data['pl_rade']:.2f} R⊕" if planet_data.get("pl_rade") else "?"
+dur_str   = f"{transit_duration*24:.2f} h" if not np.isnan(transit_duration) else "?"
+rp_str    = f"{rp_rs:.4f}"                 if not np.isnan(rp_rs)             else "?"
 rows = [
-    ("Planet",        planet),
-    ("Host Star",     f"{star}  (V={vmag_str})"),
-    ("Star T_eff",    teff_str),
-    ("Orbital Period",f"{period:.4f} days"),
-    ("Transit Depth", f"{depth*100:.3f}%"),
+    ("Planet",          target_planet),
+    ("Host Star",       f"{target_star}  (V={vmag_str})"),
+    ("Star T_eff",      teff_str),
+    ("Orbital Period",  f"{orbital_period:.4f} days"),
+    ("Transit Depth",   f"{transit_depth*100:.3f}%"),
     ("Duration (est.)", dur_str),
-    ("Rp/Rs (est.)",  rp_str),
-    ("Rp (archive)",  rad_str),
-    ("Data source",   globals().get("lc_mission", "TESS/Kepler")),
+    ("Rp/Rs (est.)",    rp_str),
+    ("Rp (archive)",    rad_str),
+    ("Data source",     lc_mission),
 ]
 ax2.set_title("Transit Parameters", fontsize=12, fontweight="bold", pad=10)
 for i, (k, v) in enumerate(rows):
@@ -339,11 +324,10 @@ for i, (k, v) in enumerate(rows):
              transform=ax2.transAxes, va="top")
     ax2.text(0.44, y, str(v), fontsize=10, transform=ax2.transAxes, va="top")
 
-plt.suptitle("Exoplanet Transit Explorer — Sage", fontsize=9, color="#888", y=0.01)
-plot_path = os.path.join(outdir, "transit_summary.png")
-plt.savefig(plot_path, dpi=150, bbox_inches="tight")
+plt.suptitle("Exoplanet Transit Explorer", fontsize=9, color="#888", y=0.01)
+plt.savefig("transit_summary.png", dpi=150, bbox_inches="tight")
 plt.close()
-print(f"Summary saved → {plot_path}")
+print("Summary saved → transit_summary.png")
 ```
 
 ---
