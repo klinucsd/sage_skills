@@ -13,32 +13,13 @@ from __future__ import annotations
 
 import os
 import shutil
-import subprocess
-import sys
 import tempfile
 from pathlib import Path
 
-
-def _ensure_deps() -> None:
-    missing = []
-    for pkg, imp in [("earthaccess", "earthaccess"), ("h5py", "h5py")]:
-        try:
-            __import__(imp)
-        except ImportError:
-            missing.append(pkg)
-    if missing:
-        print(f"[gedi-l2a] installing: {' '.join(missing)}")
-        subprocess.check_call(
-            [sys.executable, "-m", "pip", "install", "-q"] + missing
-        )
-
-
-_ensure_deps()
-
-import earthaccess  # noqa: E402  (after install guard)
-import h5py         # noqa: E402
-import numpy as np  # noqa: E402
-import pandas as pd # noqa: E402
+import earthaccess
+import h5py
+import numpy as np
+import pandas as pd
 
 
 # RH percentile indices to extract from the 101-element rh array
