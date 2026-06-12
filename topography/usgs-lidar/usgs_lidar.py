@@ -81,9 +81,21 @@ def ensure_lidar_deps(verbose=True):
         )
 
     if verbose:
-        print("[usgs-lidar] Installing PDAL via apt (~30s)...", flush=True)
+        print("[usgs-lidar] apt-get update (refresh package index)...", flush=True)
+    # apt-get update — don't fail on warnings; just refresh the cache so the
+    # subsequent install can locate packages.
+    subprocess.run(
+        ["apt-get", "update", "-qq"],
+        capture_output=True, text=True,
+    )
+
+    if verbose:
+        print("[usgs-lidar] Installing PDAL native lib via apt (~30s)...", flush=True)
+    # apt only for the PDAL C++ library + CLI + headers. Do NOT include
+    # python3-pdal here — it lives in Ubuntu's `universe` repo which isn't
+    # always enabled on Colab. We get the Python binding from PyPI instead.
     apt = subprocess.run(
-        ["apt-get", "install", "-y", "libpdal-dev", "pdal", "python3-pdal"],
+        ["apt-get", "install", "-y", "libpdal-dev", "pdal"],
         capture_output=True, text=True,
     )
     if apt.returncode != 0:
@@ -94,9 +106,12 @@ def ensure_lidar_deps(verbose=True):
 
     if verbose:
         print("[usgs-lidar] Installing Python deps via pip (~1-2 min)...", flush=True)
+    # pip for the PDAL Python binding (PyPI ships prebuilt manylinux wheels)
+    # and the rest of the lidar stack. The PDAL wheel matches whatever PDAL
+    # C++ version is on the system (apt installed it just above).
     pip = subprocess.run(
         [sys.executable, "-m", "pip", "install", "--user", "--quiet",
-         "pyforestscan", "laspy", "lazrs", "geopandas", "pyproj", "rasterio"],
+         "PDAL", "pyforestscan", "laspy", "lazrs", "geopandas", "pyproj", "rasterio"],
         capture_output=True, text=True,
     )
     if pip.returncode != 0:
