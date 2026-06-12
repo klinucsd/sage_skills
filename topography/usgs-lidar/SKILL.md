@@ -31,15 +31,47 @@ the GeoTIFF instead.
 ## Required Libraries
 
 This skill needs `pdal` + `python-pdal` (the PDAL C++ library and its Python
-bindings), plus `pyforestscan`, `laspy`, `geopandas`, `pyproj`, `rasterio`.
+bindings), plus `pyforestscan`, `laspy`, `lazrs`, `geopandas`, `pyproj`,
+`rasterio`.
 
-`pdal` is a native dependency that's non-trivial to install via pip alone —
-the easiest path is via `conda install -c conda-forge pdal python-pdal`
-(or use a scientific Python distribution that already includes it). The
-remaining libs are pip-installable:
+PDAL is a native C++ library: `pip install python-pdal` (or `pyforestscan`,
+which depends on it) tries to build from source and FAILS unless PDAL headers
+and the shared library are already present.
+
+### Google Colab — run this FIRST, before any skill script
+
+Colab does NOT have PDAL pre-installed. The reliable path is `apt` for the
+native library + `pip` for the Python bindings. Run this in a regular code
+cell BEFORE you ask the agent to download anything:
+
+```bash
+!apt-get install -y libpdal-dev pdal
+!pip install --quiet python-pdal pyforestscan laspy lazrs geopandas pyproj rasterio
+```
+
+The `apt-get` step takes ~30 s (Colab grants sudo for apt). The `pip` step
+takes ~1-2 min. After this, `import pdal` and `import pyforestscan` work.
+
+**DO NOT skip the apt step and try `pip install pyforestscan` alone — it will
+fail trying to compile `python-pdal` from source without PDAL headers.**
+
+**DO NOT spend many shell-command iterations exploring alternatives to PDAL.**
+If `import pyforestscan` fails on Colab, the answer is always: run the
+two-line install above. The fallback laspy-only path (reading EPT JSON
+directly without pyforestscan) is hard to get right and produces inferior
+output — use the proper PDAL install instead.
+
+### JupyterHub / NRP
+
+PDAL is typically pre-installed in the scientific Python image. No install
+step needed. Verify with `python -c "import pdal, pyforestscan; print('OK')"`.
+
+### Other hosts (localhost, generic Python)
+
+The cleanest cross-platform path is conda:
 
 ```
-pip install pyforestscan laspy geopandas pyproj rasterio
+conda install -c conda-forge pdal python-pdal pyforestscan laspy lazrs geopandas pyproj rasterio
 ```
 
 ## Helper module
