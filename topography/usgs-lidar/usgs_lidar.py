@@ -38,10 +38,9 @@ def fetch_coverage(color_features=True):
     """Download the USGS 3DEP coverage GeoJSON and return a GeoDataFrame.
 
     Returns the catalog as an in-memory GeoDataFrame only — no file is
-    written. Pass the result directly as `overlay_geojson` to
-    `sage_bbox_map.show_bbox_map`. (Writing the catalog to SAGE_OUTPUT_DIR
-    would trigger Sage's auto-Folium fallback at the end of the cell,
-    producing a duplicate static map next to the live ipyleaflet widget.)
+    written. Pass the result directly to your bbox-map widget's overlay
+    parameter. (Writing the catalog to disk can trigger a duplicate static
+    map next to the live widget in some host frameworks.)
 
     Args:
         color_features: if True, write a reproducible random color into each

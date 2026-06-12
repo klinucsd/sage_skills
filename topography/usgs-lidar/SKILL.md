@@ -30,17 +30,26 @@ the GeoTIFF instead.
 
 ## Required Libraries
 
-`pdal`, `python-pdal`, `pyforestscan`, `laspy`, `geopandas`, `pyproj`,
-`rasterio` are pre-installed in the Sage image. No install step is needed.
+This skill needs `pdal` + `python-pdal` (the PDAL C++ library and its Python
+bindings), plus `pyforestscan`, `laspy`, `geopandas`, `pyproj`, `rasterio`.
+
+`pdal` is a native dependency that's non-trivial to install via pip alone —
+the easiest path is via `conda install -c conda-forge pdal python-pdal`
+(or use a scientific Python distribution that already includes it). The
+remaining libs are pip-installable:
+
+```
+pip install pyforestscan laspy geopandas pyproj rasterio
+```
 
 ## Helper module
 
-The skill ships `usgs_lidar.py` next to this file. From an agent-generated
-script, add the skill directory to `sys.path` and import:
+The skill ships `usgs_lidar.py` next to this SKILL.md. Add the skill
+directory to `sys.path` before importing:
 
 ```python
 import sys
-sys.path.insert(0, "/home/jovyan/.deepagents/agent/skills/usgs-lidar")
+sys.path.insert(0, "/absolute/path/to/this/skill/directory")
 from usgs_lidar import fetch_coverage, filter_by_bbox
 ```
 
@@ -53,20 +62,13 @@ Two functions:
 
 ## Execution rules — read before writing any code
 
-- Save every script to a `.py` file with `write_file`, then run it with
-  `python /path/to/script.py`. Never use heredoc syntax (`python << 'EOF'`).
-  Never chain commands with `&&`.
-- Read kernel variables via `globals().get("VAR_NAME")`. The system prompt's
-  `EXISTING KERNEL VARIABLES` block tells you what's already set by previous cells.
-
-### Reading variables across steps
-
-Variables produced by an earlier step (e.g., `coverage`, `pointclouds`,
-`bbox`, `ept_url`) live in the kernel namespace. Read them with
-`globals().get("VAR_NAME")`. Commands chained with pipes, `&&`, or
-environment-variable prefixes run in a subprocess that cannot see kernel
-variables — keep each script self-contained and run with plain
-`python /path/to/script.py`.
+- Save every script to a `.py` file, then run it with `python /path/to/script.py`.
+  Never use heredoc syntax (`python << 'EOF'`). Never chain commands with `&&`.
+- Steps below depend on values produced by earlier steps (`coverage`,
+  `bbox`, `ept_url`, `pointclouds`, `ept_srs`, `laz_path`, `arrays`). Each
+  step's "Inputs" line names what it expects. Either combine related steps
+  into one script so the values stay as local variables, or persist them
+  between steps via files (e.g. save the LAZ in Step 6, reload it in Step 7).
 
 ---
 
@@ -81,15 +83,15 @@ Pure data step. Produces:
 **DO NOT write the coverage to a file.** Specifically:
 - Do NOT call `coverage.to_file(...)`, `coverage.to_json(...)` to a file,
   or otherwise save the catalog as `usgs_3dep_coverage.geojson` (or any name).
-- Do NOT pass a file path string to `show_bbox_map(overlay_geojson=...)` —
-  pass the in-memory `coverage` GeoDataFrame directly.
-- Writing the catalog to `SAGE_OUTPUT_DIR` is what creates the duplicate
-  static map next to the live widget. The widget renders the overlay from
+- Do NOT pass a file path string to a bbox-map overlay parameter — pass
+  the in-memory `coverage` GeoDataFrame directly.
+- Writing the catalog to disk can trigger a duplicate static map next to a
+  live widget in some host frameworks. The widget renders the overlay from
   memory; no file is needed.
 
 ```python
 import sys
-sys.path.insert(0, "/home/jovyan/.deepagents/agent/skills/usgs-lidar")
+sys.path.insert(0, "/absolute/path/to/this/skill/directory")
 from usgs_lidar import fetch_coverage
 
 coverage = fetch_coverage()
@@ -107,7 +109,7 @@ hardcoded value), return a list of intersecting datasets.
 
 ```python
 import sys
-sys.path.insert(0, "/home/jovyan/.deepagents/agent/skills/usgs-lidar")
+sys.path.insert(0, "/absolute/path/to/this/skill/directory")
 from usgs_lidar import filter_by_bbox
 
 bbox = (-122.5, 37.7, -122.3, 37.9)   # (minx, miny, maxx, maxy) in EPSG:4326
@@ -152,9 +154,11 @@ ept_srs = f"{srs.get('authority','EPSG')}:{srs.get('horizontal','3857')}"
 
 ### Step 3 script
 
-Inputs: `bbox` (4-tuple in EPSG:4326) and `ept_url` (string from Step 2's
-chosen dataset). Replace the names below with whatever your agent stores
-them under.
+**Inputs** (set at top of script, from Steps 1-2):
+- `bbox` — 4-tuple `(minx, miny, maxx, maxy)` in EPSG:4326
+- `ept_url` — EPT endpoint URL from Step 2's chosen dataset
+
+**Outputs:** `pointclouds` (list of structured numpy arrays), `ept_srs` (string).
 
 ```python
 import numpy as np
@@ -162,10 +166,9 @@ from pyproj import Transformer
 from pyforestscan.handlers import read_lidar
 from pyforestscan.utils import get_srs_from_ept
 
-bbox    = globals().get("bbox")        # or whatever name your agent picked
-ept_url = globals().get("ept_url")
-if not bbox or not ept_url:
-    raise ValueError("bbox and ept_url must be set before downloading point clouds")
+# Set from Step 1/2 selections
+bbox    = (-122.5, 37.7, -122.3, 37.9)
+ept_url = "https://s3-us-west-2.amazonaws.com/usgs-lidar-public/..."
 
 ept_srs = get_srs_from_ept(ept_url)
 transformer = Transformer.from_crs("EPSG:4326", ept_srs, always_xy=True)
@@ -176,7 +179,6 @@ bounds = ([minx, maxx], [miny, maxy])
 print(f"Downloading point cloud from {ept_url} ...")
 pointclouds = read_lidar(ept_url, ept_srs, bounds, hag=True)
 print(f"Downloaded {len(pointclouds)} point arrays.")
-globals()["pointclouds"] = pointclouds
 ```
 
 `hag=True` computes Height Above Ground (normalized elevation relative to
@@ -191,13 +193,13 @@ Decimates to ~250,000 points for browser performance.
 
 Call `fig.show()` directly — do NOT use a `![...](...)` map tag for Plotly figures.
 
+**Inputs:** `pointclouds` from Step 3 (or `arrays` from Step 7).
+
 ```python
 import plotly.graph_objects as go
 import numpy as np
 
-pointclouds = globals().get("pointclouds")
-if pointclouds is None:
-    raise ValueError("pointclouds not set — run Step 3 (download) first.")
+# pointclouds = <list of structured arrays from Step 3>
 
 all_x, all_y, all_z = [], [], []
 for pc in pointclouds:
@@ -256,39 +258,25 @@ correct hillshade with `-az 315` (NW lighting) has north-facing slopes in shadow
 
 ### Step 5 script
 
+**Inputs** (set at top of script):
+- `pointclouds` — list of structured arrays from Step 3 (or `arrays` from Step 7)
+- `ept_srs` — CRS string (from Step 3 or Step 7)
+- `bbox` — optional, the original EPSG:4326 bbox for the WMS sidecar
+
+**Outputs:** `dem_1m.tif`, `hillshade_1m.tif`, `hillshade.wms.json`.
+
 ```python
 import numpy as np, json, subprocess
 from pathlib import Path
 import rasterio
 from rasterio.transform import from_origin
-from pyforestscan.utils import get_srs_from_ept
 
-# Accept in-memory download (pointclouds) OR data loaded from LAZ file (arrays)
-pointclouds = globals().get("pointclouds") or globals().get("arrays")
-if pointclouds is None:
-    raise ValueError("No point cloud data in kernel — run Step 3 (download) or Step 7 (read LAZ) first")
+# pointclouds = <list of arrays from Step 3 or Step 7>
+ept_srs = "EPSG:3857"                 # from Step 3 or Step 7
+bbox    = (-122.5, 37.7, -122.3, 37.9)  # optional, EPSG:4326
 
-ept_url    = globals().get("ept_url")
-ept_srs    = globals().get("ept_srs")
-bbox       = globals().get("bbox")
-output_dir = Path(globals().get("SAGE_OUTPUT_DIR", "/tmp"))
+output_dir = Path(".")
 output_dir.mkdir(parents=True, exist_ok=True)
-
-if not ept_srs and ept_url:
-    ept_srs = get_srs_from_ept(ept_url)
-if not ept_srs:
-    import laspy
-    laz_path = globals().get("laz_path")
-    if not laz_path:
-        laz_files = sorted(output_dir.glob("*.laz"))
-        laz_path = str(laz_files[0]) if laz_files else None
-    if laz_path:
-        # Use laspy.open() (header-only) — laspy.read() needs a LAZ backend
-        with laspy.open(laz_path) as reader:
-            crs = reader.header.parse_crs()
-        ept_srs = f"EPSG:{crs.to_epsg()}" if crs else None
-if not ept_srs:
-    raise ValueError("Cannot determine CRS — set ept_srs or ept_url in the kernel")
 
 # Extract ground-classified points (LAS class 2)
 ground = []
@@ -380,33 +368,33 @@ returned by `read_lidar` to a LAS or LAZ file. `compress=True` (the default)
 produces a compressed `.laz` file. Pass the same SRS string used when
 downloading.
 
+**Inputs:** `pointclouds` from Step 3, `ept_url` from Step 2.
+
+**Outputs:** `pointcloud.laz` on disk, plus `laz_path` and `ept_srs` strings
+for use in Step 7.
+
 ```python
 from pyforestscan.handlers import write_las
 from pyforestscan.utils import get_srs_from_ept
 from pathlib import Path
 
-pointclouds = globals().get("pointclouds")
-ept_url     = globals().get("ept_url")
-output_dir  = Path(globals().get("SAGE_OUTPUT_DIR", "/tmp"))
-if pointclouds is None or not ept_url:
-    raise ValueError("pointclouds and ept_url must be set — run Step 3 first")
+# pointclouds = <list from Step 3>
+ept_url = "https://s3-us-west-2.amazonaws.com/usgs-lidar-public/..."  # from Step 2
 
 ept_srs = get_srs_from_ept(ept_url)
-laz_path = str(output_dir / "pointcloud.laz")
+laz_path = str(Path("pointcloud.laz"))
 write_las(pointclouds, laz_path, srs=ept_srs, compress=True)
 print(f"Saved {laz_path}")
-globals()["laz_path"] = laz_path
-globals()["ept_srs"]  = ept_srs
 ```
 
 ---
 
 ## Step 7 — Read a local LAZ/LAS file
 
-**Use this step instead of Step 3 when a `.laz` file already exists in the
-output directory.** A saved LAZ file lets you skip the EPT download entirely
-on subsequent runs — useful when adding new analysis cells (e.g. CHM,
-PAD, PAI) to a notebook without re-downloading the point cloud.
+**Use this step instead of Step 3 when a `.laz` file already exists on disk.**
+A saved LAZ file lets you skip the EPT download entirely on subsequent runs —
+useful when adding new analysis cells (e.g. CHM, PAD, PAI) without
+re-downloading the point cloud.
 
 **DO NOT reinvent CRS reading.** Specifically:
 - Do NOT call `pdal info` + parse JSON/regex to extract the SRS string.
@@ -414,50 +402,39 @@ PAD, PAI) to a notebook without re-downloading the point cloud.
   a wrong CRS produces a wrong-georeferenced output silently.
 - The canonical pattern is `laspy.open(path).header.parse_crs()` (shown
   below). Use `laspy.open()` not `laspy.read()` — `read()` decompresses
-  point data and requires a LAZ backend (`lazrs`/`laszip`) that is NOT
-  installed in the Sage image. `open()` reads only the header.
-
-Before writing a download script, check whether a `.laz` file already exists
-in `SAGE_OUTPUT_DIR`. If one does, read from it with this step.
+  point data and requires a LAZ backend (`lazrs`/`laszip`) which may not
+  be installed in some environments. `open()` reads only the header.
 
 `read_lidar` works for both EPT URLs (Step 3) and local `.las`/`.laz`/`.copc`
 files. When reading a local file, `bounds` does not apply (EPT only). `srs`
-is still required — read it from the EPT endpoint or store it alongside the
-LAZ file (Step 6 saves it as `globals()["ept_srs"]`).
+is still required — read it from the EPT endpoint or from the LAZ header.
+
+**Inputs:** `laz_path` (from Step 6 or known on disk).
+
+**Outputs:** `arrays` (list of structured arrays), `ept_srs` (string).
 
 ```python
-from pathlib import Path
 from pyforestscan.handlers import read_lidar
 
-output_dir = Path(globals().get("SAGE_OUTPUT_DIR", "/tmp"))
+# Set from Step 6 output or known location
+laz_path = "pointcloud.laz"
 
-# Locate the saved LAZ file — prefer an explicitly stored path, else scan dir
-laz_path = globals().get("laz_path")
-if not laz_path:
-    laz_files = sorted(output_dir.glob("*.laz"))
-    if not laz_files:
-        raise FileNotFoundError(f"No .laz file found in {output_dir} — run Step 3+6 first")
-    laz_path = str(laz_files[0])
-
-ept_srs = globals().get("ept_srs")
-if not ept_srs:
-    # Read CRS from the LAZ header WITHOUT decompressing point data.
-    # Use laspy.open() (streaming reader) — laspy.read() would decompress
-    # the whole file and requires a LAZ backend (lazrs/laszip), which is
-    # NOT installed in the Sage image. open() reads only the header.
-    import laspy
-    with laspy.open(laz_path) as reader:
-        crs = reader.header.parse_crs()
-    if crs is None:
-        raise ValueError(f"Could not read CRS from {laz_path} — set ept_srs manually")
-    epsg = crs.to_epsg()
-    ept_srs = f"EPSG:{epsg}" if epsg else crs.to_wkt()
-    print(f"CRS read from file: {ept_srs}")
+# Read CRS from the LAZ header WITHOUT decompressing point data.
+# Use laspy.open() (streaming reader) — laspy.read() would decompress
+# the whole file and requires a LAZ backend (lazrs/laszip), which may
+# not be installed in some environments.
+import laspy
+with laspy.open(laz_path) as reader:
+    crs = reader.header.parse_crs()
+if crs is None:
+    raise ValueError(f"Could not read CRS from {laz_path} — set ept_srs manually")
+epsg = crs.to_epsg()
+ept_srs = f"EPSG:{epsg}" if epsg else crs.to_wkt()
+print(f"CRS read from file: {ept_srs}")
 
 # hag=True adds HeightAboveGround field (needed for CHM and canopy metrics)
 arrays = read_lidar(laz_path, ept_srs, hag=True)
 print(f"Read {sum(len(a) for a in arrays):,} points from {laz_path}")
-globals()["arrays"] = arrays
 ```
 
 Supported formats: `.las`, `.laz`, `.copc`, `.copc.laz`, or `ept.json`.
@@ -489,6 +466,11 @@ below-ground noise, then `calculate_chm`.
 convention (row 0 = south). For a north-up GeoTIFF, flip the array vertically
 (`np.flipud`) and use `from_origin(x_min, y_max, ...)`.
 
+**Inputs:** `arrays` from Step 7 (or `pointclouds` from Step 3 with `hag=True`),
+`ept_srs` (from Step 3 or Step 7).
+
+**Outputs:** `chm_1m.tif`, `chm.png`.
+
 ```python
 import numpy as np
 import matplotlib
@@ -500,13 +482,9 @@ from pathlib import Path
 from pyforestscan.filters   import filter_hag
 from pyforestscan.calculate import calculate_chm
 
-arrays     = globals().get("arrays") or globals().get("pointclouds")
-output_dir = Path(globals().get("SAGE_OUTPUT_DIR", "/tmp"))
-ept_srs    = globals().get("ept_srs")
-if arrays is None:
-    raise ValueError("arrays not set — run Step 7 (or Step 3 with hag=True) first")
-if not ept_srs:
-    raise ValueError("ept_srs not set — Step 7 reads it from the LAZ header into globals()")
+# arrays = <list of arrays from Step 7 or Step 3 (with hag=True)>
+ept_srs    = "EPSG:3857"               # from Step 3 or Step 7
+output_dir = Path(".")
 
 # filter_hag removes points at or below ground (HeightAboveGround <= 0)
 arrays = filter_hag(arrays)
@@ -541,9 +519,6 @@ ax.set_title("Canopy Height Model")
 plt.savefig(chm_png, dpi=150, bbox_inches="tight")
 plt.close()
 print(f"Wrote {chm_png}")
-
-globals()["chm"] = chm
-globals()["chm_extent"] = extent
 ```
 
 ---
@@ -554,5 +529,5 @@ globals()["chm_extent"] = extent
   It contains no widgets, maps, or dropdowns. Pair it with whatever UI
   layer your agent provides for area selection and dataset picking.
 - Steps 3–8 use placeholder variable names (`bbox`, `ept_url`, `pointclouds`,
-  `OUTPUT_DIR`). The agent may use different names — adapt the
-  `globals().get(...)` calls accordingly.
+  `arrays`, `ept_srs`, `laz_path`). Set them at the top of each script
+  from the values your agent or host framework provides.
