@@ -128,6 +128,21 @@ def ensure_lidar_deps(verbose=True):
     if _user_site not in sys.path:
         sys.path.insert(0, _user_site)
 
+    # Clear stale import state. The fast-path `import pdal` at the top of
+    # this function fails on first call (package not yet installed), and
+    # importlib caches negative path-lookup results. Without these two
+    # lines the verification below sees the cached "not found" instead of
+    # the newly-installed package and raises spuriously.
+    import importlib
+    for _mod in list(sys.modules):
+        if _mod == "pdal" or _mod.startswith("pdal."):
+            del sys.modules[_mod]
+        elif _mod == "pyforestscan" or _mod.startswith("pyforestscan."):
+            del sys.modules[_mod]
+        elif _mod == "laspy" or _mod.startswith("laspy."):
+            del sys.modules[_mod]
+    importlib.invalidate_caches()
+
     # Verify all imports succeed
     try:
         import pdal  # noqa: F401
