@@ -74,24 +74,40 @@ takes ~1-2 min. The final `import` line confirms everything is wired up.
   They land in `~/.local/lib/python3.12/site-packages/` and need the
   `sys.path.insert(0, site.getusersitepackages())` line to be importable.
 
-**In every script you write for the lidar pipeline on Colab, add these
-two lines at the top BEFORE importing pyforestscan/laspy:**
+### COLAB SCRIPT TEMPLATE — start every lidar script with these lines
 
 ```python
+# Required for Colab: add --user pip installs to sys.path so they're importable
 import sys, site
 sys.path.insert(0, site.getusersitepackages())
 ```
 
-Otherwise the script will hit `ModuleNotFoundError: pyforestscan` even
-though pip reports success.
+These two lines MUST be the first import block in every Colab script that
+imports `pyforestscan`, `laspy`, etc. Without them you get
+`ModuleNotFoundError: pyforestscan` even though `pip show pyforestscan`
+confirms it's installed.
 
-**DO NOT skip the apt step and try `pip install pyforestscan` alone — it
-will try to build `python-pdal` from source and fail without PDAL headers.**
+### Anti-spiral guidance
 
-**DO NOT spend shell-command iterations on alternatives if `import pdal`
-fails.** The cause is either: the apt step didn't run, or the sys.path
-line is missing from your script. Both are fixable by following this
-section exactly.
+If your script fails with `ModuleNotFoundError: pdal` or
+`ModuleNotFoundError: pyforestscan` after the setup cell above, the cause
+is ALMOST ALWAYS one of:
+
+1. **You forgot the `sys.path.insert(0, site.getusersitepackages())` line
+   at the top of the script.** Add it and re-run.
+2. **The apt setup cell wasn't run.** Re-run the install cell.
+
+The cause is NEVER:
+- A wrong PDAL version → do NOT try `pip install PDAL==3.4.5`, `==2.6.2`,
+  or other pinned versions. PyPI's PDAL package matches whatever PDAL apt
+  installed; pinning a different version creates ABI mismatches.
+- Capitalisation → `pip install pdal` and `pip install PDAL` install the
+  same package. Don't iterate on this.
+- Missing `python-pdal` → apt's `python3-pdal` provides the binding. Do
+  NOT `pip install python-pdal` — that's the wrong package.
+
+If apt + pip + sys.path haven't fixed it after one attempt, STOP and tell
+the user. Don't try 15 variations of `pip install`.
 
 ### JupyterHub / NRP
 
