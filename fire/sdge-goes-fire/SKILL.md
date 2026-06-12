@@ -6,31 +6,60 @@ license: Apache-2.0
 
 # SDG&E GOES Fire Detection Skill
 
-Fetches GOES satellite fire detections from the SDG&E WIFIRE GeoServer. Data updated in near real-time.
+Fetches GOES satellite fire detections (last 7 days) from the SDG&E WIFIRE
+GeoServer. Data is updated in near real-time.
 
-## Task: Fetch recent fire detections
+## Dependencies
 
-Run the pre-installed script. Pass the output path as the first argument — choose a filename that fits the context.
-
-```python
-import subprocess, sys, os
-output_dir = os.environ.get('SAGE_OUTPUT_DIR', '/tmp')
-output_file = os.path.join(output_dir, 'fire_detections.geojson')
-result = subprocess.run(
-    [sys.executable, '/home/jovyan/.deepagents/agent/skills/sdge-goes-fire/sdge_goes_fire_basic.py', output_file],
-    capture_output=True, text=True, env={**os.environ}
-)
-print(result.stdout)
-if result.returncode != 0:
-    print(result.stderr)
+```
+pip install requests geopandas pandas
 ```
 
-The script saves a GeoJSON with fields: `data_time`, `lon`, `lat`, `hours_ago`.
+## Importing the helper
 
-## Analysis Tips
+The helper module `sdge_goes_fire_basic.py` lives next to this SKILL.md.
+Add the skill directory to `sys.path` before importing:
+
+```python
+import sys
+sys.path.insert(0, "/absolute/path/to/this/skill/directory")
+from sdge_goes_fire_basic import fetch_goes_fires
+```
+
+## API
+
+```python
+fetch_goes_fires(output_file)   # destination GeoJSON path
+```
+
+Returns a `GeoDataFrame` and writes a GeoJSON with fields:
+
+| Field | Description |
+|---|---|
+| `data_time` | UTC timestamp of the detection |
+| `lon` / `lat` | Detection location (EPSG:4326) |
+| `hours_ago` | Hours elapsed since the detection (derived from `seconds_ago`) |
+
+## Full example
+
+```python
+import sys
+
+# Substitute the absolute path of the directory containing this SKILL.md
+sys.path.insert(0, "/path/to/skills/sdge-goes-fire")
+from sdge_goes_fire_basic import fetch_goes_fires
+
+output_file = "fire_detections.geojson"
+gdf = fetch_goes_fires(output_file)
+print(f"{len(gdf)} fire detections")
+```
+
+## Analysis tips
 
 - `hours_ago` — how many hours since the detection
 - `data_time` — UTC timestamp of the detection
 - Group detections by date: `gdf.groupby(gdf["data_time"].dt.date).size()`
-- Filter to a county: use the us-counties skill to get county geometry, then spatial join
-- To color fire points by fuel moisture risk, use the sdge-surface-fuels skill
+- Filter to a county: use the `us-counties` skill to get county geometry,
+  then spatial join
+- To color fire points by fuel moisture risk, use the `sdge-surface-fuels`
+  skill
