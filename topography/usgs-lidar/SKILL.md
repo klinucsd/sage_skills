@@ -28,101 +28,36 @@ the **coverage tile footprint** (a polygon) from `fetch_coverage()`, not
 the points. For a 2D raster, generate a DEM from the points and reference
 the GeoTIFF instead.
 
-## Required Libraries
+## Required Libraries — call ensure_lidar_deps() before any lidar work
 
-This skill needs `pdal` + `python-pdal` (the PDAL C++ library and its Python
-bindings), plus `pyforestscan`, `laspy`, `lazrs`, `geopandas`, `pyproj`,
-`rasterio`.
+This skill needs `pdal` + Python bindings, plus `pyforestscan`, `laspy`,
+`lazrs`, `geopandas`, `pyproj`, `rasterio`. PDAL is a native C++ library,
+non-trivial to install on hosts that don't ship it (e.g. Colab).
 
-PDAL is a native C++ library: `pip install python-pdal` (or `pyforestscan`,
-which depends on it) tries to build from source and FAILS unless PDAL headers
-and the shared library are already present.
-
-### ════════════════════════════════════════════════════════════════════
-### CRITICAL — Google Colab setup. READ THIS BEFORE ANYTHING ELSE.
-### ════════════════════════════════════════════════════════════════════
-
-You (the agent) are FORBIDDEN from writing any lidar script until you have
-run the three commands in this section AND seen Command 3 succeed. This is
-not optional. This is not a suggestion. There is no other valid install
-path on Colab.
-
-**RUN THESE EXACTLY AS WRITTEN.** Do not change them. Do not add `-qq`. Do
-not add `--quiet`. Do not add `--verbose`. Do not pipe through `tail` or
-`head`. Do not add `2>&1`. Do not split into multiple commands. Do not
-substitute different package names. The commands below are correct and
-complete — your job is to execute them verbatim, not to improve them.
-
-**Command 1 — apt install PDAL + Python bindings:**
-
-```
-apt-get install -y libpdal-dev pdal python3-pdal
-```
-
-**Command 2 — pip install pure-Python deps:**
-
-```
-pip install pyforestscan laspy lazrs geopandas pyproj rasterio
-```
-
-**Command 3 — verification (this MUST print `lidar deps OK`):**
-
-```
-python -c "import pdal, pyforestscan, laspy, geopandas, pyproj, rasterio; print('lidar deps OK')"
-```
-
-If Command 3 prints `lidar deps OK`, setup succeeded. Proceed to the
-skill steps below.
-
-If Command 3 fails with any error, **STOP IMMEDIATELY**. Tell the user the
-exact error message and ask them how to proceed. Then wait. **DO NOT do
-any of the following:**
-
-- DO NOT try `pip install PDAL` with a version pin (`==2.6.2`, `==3.4.5`,
-  etc.) — this is a known dead end.
-- DO NOT try `pip install python-pdal`, `pip install PDAL` (capitalised),
-  or any other pip package for PDAL itself. Apt's `python3-pdal` is the
-  only correct source for the binding on Colab.
-- DO NOT try a "fallback laspy-only path" or any non-pyforestscan approach.
-- DO NOT search for alternative install methods.
-- DO NOT iterate on `apt-cache search`, `dpkg -l`, `pip show`, etc.
-
-Every one of those is an anti-pattern that has wasted 10+ commands in past
-runs without ever fixing the problem. If the three commands above fail,
-the user must intervene — you cannot work around it.
-
-### ════════════════════════════════════════════════════════════════════
-### MANDATORY — first lines of every Colab lidar script
-### ════════════════════════════════════════════════════════════════════
-
-Every Python script you write for the lidar pipeline on Colab MUST begin
-with these two lines, BEFORE any other `import`:
+**The helper module provides `ensure_lidar_deps()` — call it before any
+import of pyforestscan, laspy, or pdal in your script.** This is the ONLY
+correct way to install lidar dependencies for this skill. Do not run apt
+or pip commands manually — the function handles everything.
 
 ```python
-import sys, site
-sys.path.insert(0, site.getusersitepackages())
+import sys
+sys.path.insert(0, "/absolute/path/to/this/skill/directory")
+from usgs_lidar import ensure_lidar_deps, fetch_coverage, filter_by_bbox
+
+ensure_lidar_deps()   # idempotent; <100 ms when deps already present
 ```
 
-This is non-negotiable. Without these lines your script will fail with
-`ModuleNotFoundError: pyforestscan` even though `pip show pyforestscan`
-confirms it's installed — because Colab does not put `~/.local/lib/
-python3.12/site-packages/` on a subprocess Python's `sys.path` by default.
+What it does per host:
 
-If you write a script without these two lines at the top, you will need
-to edit and rerun. Save the iteration: put them at the top the first time.
+| Host | Behaviour |
+|---|---|
+| Google Colab | Runs `apt-get install libpdal-dev pdal python3-pdal`, then `pip install pyforestscan laspy lazrs geopandas pyproj rasterio`, then patches `sys.path` so user-site installs are importable. ~2 min first time; <100 ms thereafter. |
+| NRP JupyterHub | No-op (deps pre-installed in the image). |
+| localhost / other | No-op if deps present; raises a clear `RuntimeError` with a `conda install ...` hint if not. |
 
-### JupyterHub / NRP
-
-PDAL is typically pre-installed in the scientific Python image. No install
-step needed. Verify with `python -c "import pdal, pyforestscan; print('OK')"`.
-
-### Other hosts (localhost, generic Python)
-
-The cleanest cross-platform path is conda:
-
-```
-conda install -c conda-forge pdal python-pdal pyforestscan laspy lazrs geopandas pyproj rasterio
-```
+If `ensure_lidar_deps()` raises, STOP and tell the user the exact error.
+Do NOT try alternative install commands, version pins, or different
+package names — the function already encodes the correct sequence.
 
 ## Helper module
 
@@ -132,10 +67,12 @@ directory to `sys.path` before importing:
 ```python
 import sys
 sys.path.insert(0, "/absolute/path/to/this/skill/directory")
-from usgs_lidar import fetch_coverage, filter_by_bbox
+from usgs_lidar import ensure_lidar_deps, fetch_coverage, filter_by_bbox
+
+ensure_lidar_deps()   # MUST call this before any pyforestscan / laspy import
 ```
 
-Two functions:
+Three public functions:
 
 | Function                                       | Purpose                                                                       |
 |------------------------------------------------|-------------------------------------------------------------------------------|
@@ -174,8 +111,9 @@ Pure data step. Produces:
 ```python
 import sys
 sys.path.insert(0, "/absolute/path/to/this/skill/directory")
-from usgs_lidar import fetch_coverage
+from usgs_lidar import ensure_lidar_deps, fetch_coverage
 
+ensure_lidar_deps()
 coverage = fetch_coverage()
 print(f"Loaded {len(coverage)} USGS 3DEP datasets.")
 ```
@@ -192,8 +130,9 @@ hardcoded value), return a list of intersecting datasets.
 ```python
 import sys
 sys.path.insert(0, "/absolute/path/to/this/skill/directory")
-from usgs_lidar import filter_by_bbox
+from usgs_lidar import ensure_lidar_deps, filter_by_bbox
 
+ensure_lidar_deps()
 bbox = (-122.5, 37.7, -122.3, 37.9)   # (minx, miny, maxx, maxy) in EPSG:4326
 datasets = filter_by_bbox(coverage, bbox, max_points=20_000_000)
 print(f"{len(datasets)} dataset(s) intersect the bbox with under 20M estimated points.")
@@ -243,6 +182,11 @@ ept_srs = f"{srs.get('authority','EPSG')}:{srs.get('horizontal','3857')}"
 **Outputs:** `pointclouds` (list of structured numpy arrays), `ept_srs` (string).
 
 ```python
+import sys
+sys.path.insert(0, "/absolute/path/to/this/skill/directory")
+from usgs_lidar import ensure_lidar_deps
+ensure_lidar_deps()   # MUST be called before importing pyforestscan
+
 import numpy as np
 from pyproj import Transformer
 from pyforestscan.handlers import read_lidar

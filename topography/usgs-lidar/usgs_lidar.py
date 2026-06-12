@@ -1,16 +1,19 @@
 """
-usgs_lidar — pure data helpers for the USGS 3DEP LiDAR skill.
+usgs_lidar — helpers for the USGS 3DEP LiDAR skill.
 
-Two skill-agnostic data primitives:
+Public API:
+  * ensure_lidar_deps() — idempotent installer for PDAL + pyforestscan +
+    laspy + downstream Python deps. On Colab: runs apt + pip and patches
+    sys.path. On other hosts where deps are already present: no-op.
   * fetch_coverage(output_path) — download the USGS 3DEP coverage GeoJSON,
     optionally save it to a file (so it can be used as a sage-bbox-map
     overlay), return a GeoDataFrame for in-memory queries.
   * filter_by_bbox(coverage, bbox, max_points) — given a GeoDataFrame and a
     bbox tuple, return a list of dicts describing the intersecting datasets.
 
-Both functions are GUI-free. They're imported by the agent-generated scripts
-that compose this skill with sage-bbox-map (area selection) and sage-dropdown
-(dataset selection).
+The fetch / filter functions are GUI-free. They're imported by the
+agent-generated scripts that compose this skill with sage-bbox-map (area
+selection) and sage-dropdown (dataset selection).
 """
 
 import json
@@ -21,6 +24,103 @@ import geopandas as gpd
 import pyproj
 import requests
 from shapely.geometry import box
+
+
+def ensure_lidar_deps(verbose=True):
+    """Install PDAL + Python lidar deps if missing. Call BEFORE importing
+    pyforestscan, laspy, etc. from any script.
+
+    Idempotent — safe to call from every lidar script. After the first
+    real install per session, subsequent calls are fast no-ops (<100 ms).
+
+    Behaviour by host:
+      * Colab — runs `apt-get install -y libpdal-dev pdal python3-pdal`,
+        then `pip install --user pyforestscan laspy lazrs geopandas pyproj
+        rasterio`, then patches sys.path so user-site installs are
+        importable from subprocess Python. ~2 min first time.
+      * NRP JupyterHub / other hosts with deps pre-installed — no-op.
+      * Other hosts where deps are missing — raises RuntimeError with a
+        clear conda command for the user.
+
+    Args:
+        verbose: if True, print progress lines during the install.
+
+    Raises:
+        RuntimeError: if deps cannot be installed (non-Colab host without
+            them pre-present, or apt/pip failure on Colab).
+    """
+    import os
+    import site
+    import subprocess
+    import sys
+
+    # Always patch user-site onto sys.path — cheap, idempotent. Needed
+    # because Colab's subprocess Python doesn't include it by default,
+    # so pip --user installs from prior calls aren't otherwise findable.
+    _user_site = site.getusersitepackages()
+    if _user_site not in sys.path:
+        sys.path.insert(0, _user_site)
+
+    # Fast path: everything already importable. Return immediately.
+    try:
+        import pdal  # noqa: F401
+        import pyforestscan  # noqa: F401
+        import laspy  # noqa: F401
+        return
+    except ImportError:
+        pass
+
+    is_colab = "google.colab" in sys.modules or os.path.exists("/content")
+
+    if not is_colab:
+        raise RuntimeError(
+            "Lidar dependencies (pdal, pyforestscan, laspy) are not "
+            "installed and this host is not Colab. Install with conda:\n"
+            "  conda install -c conda-forge pdal python-pdal "
+            "pyforestscan laspy lazrs geopandas pyproj rasterio"
+        )
+
+    if verbose:
+        print("[usgs-lidar] Installing PDAL via apt (~30s)...", flush=True)
+    apt = subprocess.run(
+        ["apt-get", "install", "-y", "libpdal-dev", "pdal", "python3-pdal"],
+        capture_output=True, text=True,
+    )
+    if apt.returncode != 0:
+        raise RuntimeError(
+            f"[usgs-lidar] apt-get install failed (exit {apt.returncode}):\n"
+            f"{apt.stderr[-2000:]}"
+        )
+
+    if verbose:
+        print("[usgs-lidar] Installing Python deps via pip (~1-2 min)...", flush=True)
+    pip = subprocess.run(
+        [sys.executable, "-m", "pip", "install", "--user", "--quiet",
+         "pyforestscan", "laspy", "lazrs", "geopandas", "pyproj", "rasterio"],
+        capture_output=True, text=True,
+    )
+    if pip.returncode != 0:
+        raise RuntimeError(
+            f"[usgs-lidar] pip install failed (exit {pip.returncode}):\n"
+            f"{pip.stderr[-2000:]}"
+        )
+
+    # Re-add user-site after install (in case it was empty and dropped)
+    if _user_site not in sys.path:
+        sys.path.insert(0, _user_site)
+
+    # Verify all imports succeed
+    try:
+        import pdal  # noqa: F401
+        import pyforestscan  # noqa: F401
+        import laspy  # noqa: F401
+    except ImportError as e:
+        raise RuntimeError(
+            f"[usgs-lidar] install completed but import still fails: {e}"
+        )
+
+    if verbose:
+        print("[usgs-lidar] lidar deps OK", flush=True)
 
 
 # Reproducible 27-color categorical palette mirroring the USGS 3DEP web app.
