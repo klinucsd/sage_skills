@@ -81,29 +81,22 @@ def ensure_lidar_deps(verbose=True):
         )
 
     if verbose:
-        print("[usgs-lidar] Enabling universe repo + refreshing apt index...", flush=True)
-    # Ubuntu's `python3-pdal` package lives in the `universe` repo, which
-    # isn't enabled by default on Colab. Enable it (idempotent) so apt can
-    # locate python3-pdal in the next step. Don't fail if these warn.
-    subprocess.run(
-        ["add-apt-repository", "-y", "universe"],
-        capture_output=True, text=True,
-    )
+        print("[usgs-lidar] Refreshing apt index...", flush=True)
     subprocess.run(
         ["apt-get", "update", "-qq"],
         capture_output=True, text=True,
     )
 
     if verbose:
-        print("[usgs-lidar] Installing PDAL + Python binding via apt (~30s)...", flush=True)
-    # All from apt — binary, fast, no build step:
-    #   libpdal-dev: PDAL C++ headers (needed if anything else compiles)
-    #   pdal:        PDAL CLI
-    #   python3-pdal: Python binding for PDAL, prebuilt by Ubuntu, installs
-    #                 to /usr/lib/python3/dist-packages/ which IS on the
-    #                 default sys.path for system Python 3.
+        print("[usgs-lidar] Installing PDAL 2.6.2 from UbuntuGIS PPA (~30s)...", flush=True)
+    # Ubuntu 22.04 (jammy) main repo only has PDAL 2.3.0, too old for the
+    # PyPI PDAL Python binding. UbuntuGIS PPA (typically pre-configured on
+    # Colab) ships 2.6.2+ds-1~jammy0. Force that version explicitly so we
+    # don't accidentally get the older one from main.
     apt = subprocess.run(
-        ["apt-get", "install", "-y", "libpdal-dev", "pdal", "python3-pdal"],
+        ["apt-get", "install", "-y",
+         "pdal=2.6.2+ds-1~jammy0",
+         "libpdal-dev=2.6.2+ds-1~jammy0"],
         capture_output=True, text=True,
     )
     if apt.returncode != 0:
@@ -113,31 +106,16 @@ def ensure_lidar_deps(verbose=True):
         )
 
     if verbose:
-        print("[usgs-lidar] Installing Python deps via pip (~1-2 min)...", flush=True)
-    # pip for pyforestscan + other pure-Python deps. NOT including PDAL
-    # here — apt already provided python3-pdal, and asking pip to also
-    # install PDAL from PyPI on Colab triggers a from-source build that
-    # fails (no Python 3.12 wheel as of mid-2025). Use --no-deps so pip
-    # won't try to pull PDAL as a transitive dep of pyforestscan.
+        print("[usgs-lidar] Installing PDAL Python binding + deps via pip (~2-3 min)...", flush=True)
+    # PyPI's PDAL 3.5.x requires PDAL C++ 2.7+, which UbuntuGIS doesn't
+    # ship for jammy. Pin to PDAL Python <3.5 (the 3.4.x line) which is
+    # compatible with PDAL C++ 2.6.x. Build is from source (no Python
+    # 3.12 wheels), takes 1-2 min, but completes once PDAL 2.6 headers
+    # are available from the apt step above.
     pip = subprocess.run(
         [sys.executable, "-m", "pip", "install", "--user", "--quiet",
-         "--no-deps",
+         "PDAL<3.5",
          "pyforestscan", "laspy", "lazrs", "geopandas", "pyproj", "rasterio"],
-        capture_output=True, text=True,
-    )
-    if pip.returncode != 0:
-        raise RuntimeError(
-            f"[usgs-lidar] pip install (--no-deps) failed (exit {pip.returncode}):\n"
-            f"{pip.stderr[-2000:]}"
-        )
-
-    # Now install pyforestscan's transitive deps (everything EXCEPT PDAL,
-    # which is already provided by apt). These are all pure-Python.
-    if verbose:
-        print("[usgs-lidar] Installing pyforestscan transitive deps...", flush=True)
-    pip = subprocess.run(
-        [sys.executable, "-m", "pip", "install", "--user", "--quiet",
-         "numpy", "pandas", "scipy", "shapely", "matplotlib"],
         capture_output=True, text=True,
     )
     if pip.returncode != 0:
