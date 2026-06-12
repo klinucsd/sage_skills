@@ -38,58 +38,52 @@ PDAL is a native C++ library: `pip install python-pdal` (or `pyforestscan`,
 which depends on it) tries to build from source and FAILS unless PDAL headers
 and the shared library are already present.
 
-### Google Colab — install + script template
+### Google Colab — setup procedure (mandatory)
 
-Colab does NOT have PDAL pre-installed. Before importing the helper or
-running any lidar script, you (the agent) need to:
+On Colab you must run these THREE commands BEFORE writing or running any
+lidar script. Run them EXACTLY as written. Do not add `-qq`, do not add
+`2>&1 | tail`, do not change the package list, do not pipe output.
 
-**1. Install PDAL via apt and the Python deps via pip:**
+**Command 1** — install PDAL native library + Python bindings via apt:
 
-```bash
+```
 apt-get install -y libpdal-dev pdal python3-pdal
+```
+
+**Command 2** — install the remaining Python deps via pip:
+
+```
 pip install pyforestscan laspy lazrs geopandas pyproj rasterio
 ```
 
-`apt-get` installs PDAL system-wide (Colab grants sudo for apt). The Python
-binding `python3-pdal` lands at `/usr/lib/python3/dist-packages/`, which IS
-on every subprocess Python's default `sys.path`. The pip deps land in
-`~/.local/lib/python3.12/site-packages/` (Colab installs to user-site by
-default), which is NOT on subprocess sys.path — handle that in step 2.
+**Command 3** — verify all imports succeed:
 
-These commands are idempotent — re-running them is a fast no-op if the
-packages are already installed, so it's safe to put them at the start of
-the first lidar cell each session.
+```
+python -c "import pdal, pyforestscan, laspy, geopandas, pyproj, rasterio; print('lidar deps OK')"
+```
 
-**2. Start every lidar script with the user-site sys.path line:**
+If Command 3 prints `lidar deps OK`, you are done with setup. Proceed to
+the steps below.
+
+If Command 3 fails, STOP and tell the user the exact error message. Do NOT
+try alternative install commands, do NOT try pinned versions, do NOT try
+different package names. Setup is either via the three commands above or
+not at all.
+
+### Required first lines in every Colab lidar script
+
+Every script you write must begin with these two lines BEFORE any other
+import:
 
 ```python
 import sys, site
 sys.path.insert(0, site.getusersitepackages())
 ```
 
-This must be the FIRST import block in every script that uses pyforestscan
-or laspy. Without it the import fails with `ModuleNotFoundError`, even
-though `pip show pyforestscan` confirms it's installed.
-
-### Anti-spiral guidance for Colab
-
-If `import pdal` or `import pyforestscan` fails in your script, the cause
-is ALMOST ALWAYS one of:
-
-1. **The sys.path line is missing from the script top.** Add it and re-run.
-2. **The apt-get step hasn't run yet.** Run it once at the start of work.
-
-The cause is NEVER:
-- A wrong PDAL version → do NOT try `pip install PDAL==3.4.5`, `==2.6.2`,
-  or other pinned versions. PyPI's PDAL matches whatever PDAL apt
-  installed; pinning a different version creates ABI mismatches.
-- Capitalisation → `pip install pdal` and `pip install PDAL` install the
-  same package. Don't iterate on this.
-- Missing `python-pdal` from pip → apt's `python3-pdal` provides the
-  binding. Do NOT `pip install python-pdal` — that's the wrong path.
-
-If apt + pip + sys.path haven't fixed it after one attempt, STOP and tell
-the user. Don't try 15 variations of `pip install`.
+Reason: pip on Colab installs to `~/.local/lib/python3.12/site-packages/`,
+which is not on a subprocess Python's `sys.path` by default. Without these
+two lines, your script will fail with `ModuleNotFoundError: pyforestscan`
+even though `pip show pyforestscan` confirms it's installed.
 
 ### JupyterHub / NRP
 
