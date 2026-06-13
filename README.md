@@ -23,7 +23,7 @@ Skills are organized by discipline. Each top-level folder collects related domai
 | Discipline | Skills |
 |---|---|
 | `topography/` | Elevation, LiDAR point clouds, DEMs, canopy height. `usgs-lidar`, `gedi-l2a`, `cop30-topo`, `py3dep-dem`. |
-| `hydrography/` | Rivers, floods, watershed analysis, Kanawha demo set. `nhd-rivers`, `kanawha-flood-depth`, `kanawha-reach-impact`, `kanawha-cikr-impact`, `kanawha-nsi-impact`. |
+| `hydrography/` | Rivers, floods, watershed analysis, Kanawha demo set, Po-basin groundwater wells. `nhd-rivers`, `kanawha-flood-depth`, `kanawha-reach-impact`, `kanawha-cikr-impact`, `kanawha-nsi-impact`. Italian groundwater (under `hydrography/groundwater/italy/`): `po-wells`, `po-wells-timeseries`, `er-well-registry`. |
 | `remote-sensing/` | Satellite imagery and SAR. `sentinel1-sar`, `sentinel2-l2a`. |
 | `fire/` | Wildfire detections, surface fuels, vegetation treatments. `sdge-goes-fire`, `sdge-surface-fuels`, `ca-vegetation-treatments`. |
 | `hazards/` | Earthquakes and other natural hazards. `usgs-earthquake-events`. |
