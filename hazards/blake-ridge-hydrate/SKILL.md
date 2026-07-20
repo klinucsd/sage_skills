@@ -1,18 +1,15 @@
 ---
 name: blake-ridge-hydrate
 description: >-
-  Blake Ridge gas-hydrate reservoir simulation outputs — a PFLOTRAN
-  probabilistic reservoir model of methanogenesis and gas-hydrate
-  formation across a 108×84 grid of the Blake Ridge continental margin
-  offshore the southeastern United States. Use when the user asks about
-  gas hydrate, methane hydrate, PFLOTRAN, Blake Ridge, ODP Site 997,
-  methanogenesis, hydrate saturation, sedimentation rate, TOC (total
-  organic carbon), heat flux, or wants to explore the simulation
-  outputs backing Eymold (2021, *G-Cubed*). The skill exposes three
-  linked data files: a per-grid-node environmental attribute table, a
-  per-grid-node correlation-coefficient table, and an HDF5 archive of
-  sediment-profile time series and hydrate-mass maps. Built from
-  https://zenodo.org/records/4557948.
+  Gas-hydrate reservoir simulations for the Blake Ridge continental
+  margin, offshore the southeastern United States — PFLOTRAN
+  probabilistic models of methanogenesis and methane-hydrate formation
+  in seafloor sediments across ~9,000 grid locations. Use when the user
+  asks about gas hydrate, methane hydrate, hydrate saturation, hydrate
+  mass, Blake Ridge, ODP Site 997, PFLOTRAN, methanogenesis, or how
+  hydrate formation relates to water depth, seafloor temperature,
+  sedimentation rate, TOC (total organic carbon), or heat flux —
+  including the simulation outputs behind Eymold (2021, G-Cubed).
 ---
 
 # Blake Ridge Gas-Hydrate PFLOTRAN Simulations
