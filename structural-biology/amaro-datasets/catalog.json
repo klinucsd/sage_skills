@@ -1,0 +1,384 @@
+{
+  "_comment": "Amaro Lab (UCSD) published MD datasets under 1 GB. Sizes are Content-Length in bytes, verified by HEAD request 2026-11-10. Source page: https://amarolab.ucsd.edu/data.php -- its /files/ links 302-redirect to Globus HTTPS endpoints.",
+  "cache_root": "/tmp/amaro",
+  "size_limit_bytes": 1073741824,
+  "datasets": [
+    {
+      "id": "nsp14",
+      "system": "SARS-CoV-2 nsp14 (ExoN proofreading exonuclease / N7-methyltransferase)",
+      "has_dynamics": true,
+      "components": "protein only (dry: no water, no ions)",
+      "method": "classical MD, 3 replicas concatenated",
+      "engine": "Amber",
+      "total_bytes": 549128330,
+      "files": [
+        {
+          "role": "topology",
+          "format": "PSF",
+          "bytes": 53633,
+          "url": "https://amarolab.ucsd.edu/files/covid19/CoV2_ExoN/nsp14/dry_files/nsp14_dry_segname.psf.gz"
+        },
+        {
+          "role": "trajectory",
+          "format": "DCD",
+          "bytes": 549074697,
+          "url": "https://amarolab.ucsd.edu/files/covid19/CoV2_ExoN/nsp14_amber/trajectories_nsp14_amber_dry_amarolab.dcd.gz"
+        }
+      ],
+      "answers": [
+        "RMSD and RMSF over time",
+        "domain flexibility",
+        "residue contacts",
+        "secondary structure changes",
+        "principal motions"
+      ],
+      "cannot_answer": [
+        "anything involving water, ions or solvation",
+        "binding free energies",
+        "absolute timescales unless the timestep is confirmed with the lab"
+      ],
+      "larger_alternatives": [
+        {
+          "name": "trajectories_nsp14_namd_dry",
+          "size_gb": 2.4,
+          "what": "the NAMD run of the same system; longer than the Amber trajectory in this collection"
+        }
+      ],
+      "topology": {
+        "psf_style": "standard: real segids and real amino-acid resnames",
+        "segments": {
+          "N14": "resid 2-526, 525 residues (the protein)",
+          "MG2": "resid 1",
+          "ZN1": "resid 527",
+          "ZN2": "resid 528",
+          "ZN3": "resid 529"
+        },
+        "select": {
+          "protein": "segid N14",
+          "ca": "segid N14 and name CA",
+          "backbone": "segid N14 and backbone"
+        },
+        "note": "Standard MDAnalysis selections work here."
+      }
+    },
+    {
+      "id": "nsp14-nsp10",
+      "system": "SARS-CoV-2 nsp14 in complex with its nsp10 cofactor",
+      "has_dynamics": true,
+      "components": "protein only (dry: no water, no ions)",
+      "method": "classical MD, 3 replicas concatenated",
+      "engine": "Amber",
+      "total_bytes": 672748643,
+      "files": [
+        {
+          "role": "topology",
+          "format": "PSF",
+          "bytes": 104247,
+          "url": "https://amarolab.ucsd.edu/files/covid19/CoV2_ExoN/nsp14_nsp10/dry_files/nsp14_nsp10_dry_segname.psf.gz"
+        },
+        {
+          "role": "trajectory",
+          "format": "DCD",
+          "bytes": 672644396,
+          "url": "https://amarolab.ucsd.edu/files/covid19/CoV2_ExoN/nsp14_nsp10_amber/trajectories_nsp14_nsp10_amber_dry_amarolab.dcd.gz"
+        }
+      ],
+      "answers": [
+        "how nsp10 binding changes nsp14 dynamics (compare against the nsp14 dataset)",
+        "interface contacts between nsp14 and nsp10",
+        "RMSD, RMSF, principal motions"
+      ],
+      "cannot_answer": [
+        "anything involving water, ions or solvation",
+        "binding free energies"
+      ],
+      "larger_alternatives": [
+        {
+          "name": "trajectories_nsp14_nsp10_namd_dry",
+          "size_gb": 2.8,
+          "what": "NAMD run of the same system"
+        }
+      ],
+      "topology": {
+        "psf_style": "NON-STANDARD: the segid column is BLANK and the chain label sits in the resname field, so the real amino-acid names are absent from this file",
+        "warning": "`protein`, `backbone` and `segid N14` all return ZERO atoms \u2014 silently, not as an error. Select chains by resname and name atoms explicitly.",
+        "segments": {
+          "N14": "resid 2-526, 525 residues",
+          "N10": "resid 530-659, 130 residues",
+          "MG2": "resid 1",
+          "ZN1-ZN3": "resid 527-529",
+          "ZN4-ZN5": "resid 660-661"
+        },
+        "select": {
+          "nsp14": "resname N14",
+          "nsp10": "resname N10",
+          "nsp14_ca": "resname N14 and name CA",
+          "nsp14_backbone": "resname N14 and name N CA C O"
+        },
+        "total_residues": 661,
+        "note": "Comparing against the apo `nsp14` dataset requires DIFFERENT selection syntax for each file: `segid N14` there, `resname N14` here. The resid numbering matches (2-526 both), so per-residue comparison is valid once selected correctly."
+      }
+    },
+    {
+      "id": "nsp14-nsp10-rna",
+      "system": "SARS-CoV-2 nsp14/nsp10 complex with RNA bound",
+      "has_dynamics": true,
+      "components": "protein + RNA (dry: no water, no ions)",
+      "method": "classical MD, 3 replicas concatenated",
+      "engine": "Amber",
+      "total_bytes": 692354327,
+      "files": [
+        {
+          "role": "topology",
+          "format": "PSF",
+          "bytes": 109427,
+          "url": "https://amarolab.ucsd.edu/files/covid19/CoV2_ExoN/nsp14_rna/dry_files/nsp14_rna_dry_segname.psf.gz"
+        },
+        {
+          "role": "trajectory",
+          "format": "DCD",
+          "bytes": 692244900,
+          "url": "https://amarolab.ucsd.edu/files/covid19/CoV2_ExoN/nsp14_rna_amber/trajectories_nsp14_nsp10_rna_amber_dry_amarolab.dcd.gz"
+        }
+      ],
+      "answers": [
+        "protein-RNA contacts",
+        "how RNA binding changes protein dynamics (compare against nsp14-nsp10)",
+        "RMSD, RMSF, principal motions"
+      ],
+      "cannot_answer": [
+        "anything involving water, ions or solvation",
+        "binding free energies"
+      ],
+      "larger_alternatives": [
+        {
+          "name": "trajectories_nsp14_nsp10_rna_namd_dry",
+          "size_gb": 2.9,
+          "what": "NAMD run of the same system"
+        }
+      ],
+      "topology": {
+        "psf_style": "NON-STANDARD: the segid column is BLANK and the chain label sits in the resname field, so the real amino-acid names are absent from this file",
+        "warning": "`protein`, `backbone` and `segid N14` all return ZERO atoms \u2014 silently, not as an error. Select chains by resname and name atoms explicitly.",
+        "segments": {
+          "N14": "resid 2-526, 525 residues",
+          "N10": "resid 530-659, 130 residues",
+          "MG2": "resid 1",
+          "ZN1-ZN3": "resid 527-529",
+          "ZN4-ZN5": "resid 660-661",
+          "RNA": "resid 662-677, 16 residues",
+          "MG1": "resid 678"
+        },
+        "select": {
+          "nsp14": "resname N14",
+          "nsp10": "resname N10",
+          "nsp14_ca": "resname N14 and name CA",
+          "nsp14_backbone": "resname N14 and name N CA C O",
+          "rna": "resname RNA"
+        },
+        "total_residues": 678,
+        "note": "Comparing against the apo `nsp14` dataset requires DIFFERENT selection syntax for each file: `segid N14` there, `resname N14` here. The resid numbering matches (2-526 both), so per-residue comparison is valid once selected correctly."
+      }
+    },
+    {
+      "id": "spike-open",
+      "system": "SARS-CoV-2 full-length spike, OPEN state",
+      "has_dynamics": false,
+      "components": "protein + glycans + membrane + water + ions",
+      "method": "single structure (topology + coordinates), not a trajectory",
+      "engine": "NAMD/CHARMM",
+      "total_bytes": 48669043,
+      "files": [
+        {
+          "role": "bundle",
+          "format": "tar.gz containing PSF + PDB",
+          "bytes": 48669043,
+          "url": "https://amarolab.ucsd.edu/files/covid19/PSF-PDB_spike_open_prot_glyc_memb_wat_ions_amarolab.tar.gz"
+        }
+      ],
+      "answers": [
+        "atom and residue counts",
+        "chain and segment composition",
+        "where the glycans are and what they cover",
+        "distances and geometry in this one structure"
+      ],
+      "cannot_answer": [
+        "anything over time -- there is no trajectory here, so RMSD, RMSF, flexibility and motions are all unavailable"
+      ],
+      "larger_alternatives": [
+        {
+          "name": "TRAJECTORIES_spike_open_prot_glyc",
+          "size_gb": 33.1,
+          "what": "6 replicas, protein + glycans, OPEN state \u2014 the dataset that actually answers dynamics questions about the open spike"
+        }
+      ]
+    },
+    {
+      "id": "spike-closed",
+      "system": "SARS-CoV-2 full-length spike, CLOSED state",
+      "has_dynamics": false,
+      "components": "protein + glycans + membrane + water + ions",
+      "method": "single structure (topology + coordinates), not a trajectory",
+      "engine": "NAMD/CHARMM",
+      "total_bytes": 47890489,
+      "files": [
+        {
+          "role": "bundle",
+          "format": "tar.gz containing PSF + PDB",
+          "bytes": 47890489,
+          "url": "https://amarolab.ucsd.edu/files/covid19/PSF-PDB_spike_closed_prot_glyc_memb_wat_ions_amarolab.tar.gz"
+        }
+      ],
+      "answers": [
+        "atom and residue counts",
+        "chain and segment composition",
+        "glycan positions",
+        "open-vs-closed structural comparison against the spike-open dataset"
+      ],
+      "cannot_answer": [
+        "anything over time -- there is no trajectory here"
+      ],
+      "larger_alternatives": [
+        {
+          "name": "TRAJECTORIES_spike_closed_prot_glyc",
+          "size_gb": 13.6,
+          "what": "3 replicas, protein + glycans, CLOSED state"
+        },
+        {
+          "name": "TRAJECTORIES_spike_mutant_prot_glyc",
+          "size_gb": 32.9,
+          "what": "6 replicas, OPEN state bearing the N165A/N234A glycan-knockout mutations"
+        }
+      ]
+    },
+    {
+      "id": "ace2-rbd",
+      "system": "ACE2 receptor in complex with the SARS-CoV-2 spike RBD",
+      "has_dynamics": false,
+      "components": "protein + glycans + membrane + water + ions",
+      "method": "single structure (topology + coordinates), not a trajectory",
+      "engine": "NAMD/CHARMM",
+      "total_bytes": 23224119,
+      "files": [
+        {
+          "role": "bundle",
+          "format": "tar.gz containing PSF + PDB",
+          "bytes": 23224119,
+          "url": "https://amarolab.ucsd.edu/files/covid19/PSF-PDB_ace2_rbd_prot_glyc_memb_wat_ions.amarolab.tar.gz"
+        }
+      ],
+      "answers": [
+        "ACE2-RBD interface residues and contacts in this structure",
+        "atom and residue counts",
+        "glycan positions near the interface"
+      ],
+      "cannot_answer": [
+        "anything over time -- there is no trajectory here"
+      ],
+      "larger_alternatives": [
+        {
+          "name": "TRAJECTORIES_ace2_rbd_prot_glyc_memb",
+          "size_gb": 45.3,
+          "what": "3 replicas of the ACE2/RBD complex, protein + glycans + membrane"
+        }
+      ]
+    },
+    {
+      "id": "hiv-env-models",
+      "system": "HIV-1 Env trimer (BG505), full-length model structures",
+      "has_dynamics": false,
+      "components": "model PDB structures used to start the production simulations",
+      "method": "single structure (topology + coordinates), not a trajectory",
+      "engine": "NAMD/CHARMM",
+      "total_bytes": 144742740,
+      "files": [
+        {
+          "role": "bundle",
+          "format": "tar.gz containing PSF/PDB",
+          "bytes": 144742740,
+          "url": "https://g-eeafda.2af3b.36fe.data.globus.org/Env_model_PDB_files.tar.gz"
+        }
+      ],
+      "answers": [
+        "Env trimer composition and glycan positions",
+        "atom and residue counts",
+        "comparison against the spike structures as a second class-I fusion protein"
+      ],
+      "cannot_answer": [
+        "anything over time -- there is no trajectory here"
+      ],
+      "larger_alternatives": [
+        {
+          "name": "Env_simulation_data",
+          "size_gb": 436.5,
+          "what": "the production MD trajectories for the full-length Env systems"
+        }
+      ]
+    },
+    {
+      "id": "h1n1-michigan-2015",
+      "system": "Influenza A/Michigan/2015 (H1N1) whole virion, final frame",
+      "has_dynamics": false,
+      "components": "protein + glycans + membrane (no water, no ions)",
+      "method": "final frame of an all-atom whole-virion MD simulation",
+      "engine": "NAMD/CHARMM",
+      "total_bytes": 900861490,
+      "files": [
+        {
+          "role": "bundle",
+          "format": "tar.gz containing PSF/PDB",
+          "bytes": 900861490,
+          "url": "https://amarolab.ucsd.edu/files/influenza/H1N1-Mich2015-PSF-PDB-JS_lastframe_not_water_not_ions.tar.gz"
+        }
+      ],
+      "answers": [
+        "whole-virion composition: how many proteins, which glycans, membrane extent",
+        "hemagglutinin and neuraminidase spacing and distribution over the virion surface",
+        "atom and residue counts at virion scale"
+      ],
+      "cannot_answer": [
+        "anything over time -- there is no trajectory here"
+      ],
+      "larger_alternatives": [
+        {
+          "name": "H1N1-Mich2015-TRAJECTORY",
+          "size_gb": 1014.7,
+          "what": "the full whole-virion trajectory -- over a terabyte"
+        }
+      ]
+    },
+    {
+      "id": "h1n1-shandong-2009",
+      "system": "Influenza A/swine/Shandong/2009 (H1N1) whole virion, final frame",
+      "has_dynamics": false,
+      "components": "protein + glycans + membrane (no water, no ions)",
+      "method": "final frame of an all-atom whole-virion MD simulation",
+      "engine": "NAMD/CHARMM",
+      "total_bytes": 900607982,
+      "files": [
+        {
+          "role": "bundle",
+          "format": "tar.gz containing PSF/PDB",
+          "bytes": 900607982,
+          "url": "https://amarolab.ucsd.edu/files/influenza/H1N1-Shan2009-PSF-PDB-JS_lastframe_not_water_not_ions.tar.gz"
+        }
+      ],
+      "answers": [
+        "whole-virion composition and surface protein distribution",
+        "strain comparison against the Michigan 2015 virion"
+      ],
+      "cannot_answer": [
+        "anything over time -- there is no trajectory here"
+      ],
+      "larger_alternatives": [
+        {
+          "name": "H1N1-Shan2009-TRAJECTORY",
+          "size_gb": 1048.2,
+          "what": "the full whole-virion trajectory -- over a terabyte"
+        }
+      ]
+    }
+  ],
+  "_not_fetchable": "Entries under 'larger_alternatives' are reference only: they record what the Amaro Lab publishes beyond this collection's 1 GB cut-off, so a question needing them can be answered honestly without a download. They carry no URL and no 'files' list, and fetch_dataset() cannot retrieve them. Point the user at https://amarolab.ucsd.edu/data.php instead.",
+  "_known_broken": "fl-A3B.tar.gz (APOBEC3B, ~880 MB) is listed on the Amaro Lab page but its link is relative and does not resolve (HTTP 404). Excluded for that reason, not by size. Worth reporting to the lab."
+}

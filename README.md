@@ -28,6 +28,7 @@ Skills are organized by discipline. Each top-level folder collects related domai
 | `fire/` | Wildfire detections, surface fuels, vegetation treatments. `sdge-goes-fire`, `sdge-surface-fuels`, `ca-vegetation-treatments`. |
 | `hazards/` | Earthquakes and other natural hazards. `usgs-earthquake-events`. |
 | `astronomy/` | Astronomical data products. `exoplanet-transits`. |
+| `structural-biology/` | Biomolecular simulation datasets. `amaro-datasets` (Amaro Lab MD: SARS-CoV-2 nsp14/nsp10/RNA, spike, ACE2-RBD, HIV-1 Env, influenza whole virion). |
 
 A skill that genuinely spans multiple disciplines is placed under its *primary* use; the categorization is a navigation aid, not a strict taxonomy.
 
