@@ -1,0 +1,208 @@
+{
+ "dataset": "fl_p53_Anton",
+ "title": "Full-length DNA-bound p53 tetramer, Anton long-timescale simulations",
+ "source_page": "https://amarolab.ucsd.edu/data.php#p53",
+ "browse_root": "https://amarolab.ucsd.edu/files/p53/odemir/fl_p53_Anton",
+ "lab": "Amaro Lab, UC San Diego",
+ "reference": "Dynamic Profile of DNA-bound Full-length p53 Tetramer",
+ "why_this_dataset_is_special": "Published file-by-file, not only as a tar.gz, and the server honours HTTP range requests. Any frame is readable without downloading the trajectory.",
+ "tarball": {
+  "url": "https://amarolab.ucsd.edu/files/p53/odemir/fl_p53_Anton/fl_p53_Anton.tar.gz",
+  "bytes": 68520374308,
+  "note": "Do NOT download this. Every file inside it is individually addressable."
+ },
+ "simulation": {
+  "length_us": 7.5,
+  "frames_per_replica": 31250,
+  "ps_per_frame": 240.0,
+  "aligned_on": "DBD backbones",
+  "solvent": "stripped (dry)"
+ },
+ "conditions": [
+  {
+   "id": "wt",
+   "label": "wild type",
+   "mutation": null,
+   "topology": {
+    "psf_url": "https://amarolab.ucsd.edu/files/p53/odemir/fl_p53_Anton/md_trajectories/wt/p53_tet_p21_smaller_ZAFF_dry_segnames_corResid.psf",
+    "psf_bytes": 2614985,
+    "prmtop_url": "https://amarolab.ucsd.edu/files/p53/odemir/fl_p53_Anton/md_trajectories/wt/p53_tet_p21_smaller_ZAFF_dry.prmtop",
+    "prmtop_bytes": 11744490,
+    "use": "psf_url"
+   },
+   "replicas": [
+    {
+     "id": "wt_sim1",
+     "url": "https://amarolab.ucsd.edu/files/p53/odemir/fl_p53_Anton/md_trajectories/wt/wt_sim1_7.5us_trajectory_alignedwrt_DBDbackbones.dcd",
+     "bytes": 10244875196,
+     "frames": 31250,
+     "atoms": 27313,
+     "header_bytes": 196,
+     "bytes_per_frame": 327836
+    },
+    {
+     "id": "wt_sim2",
+     "url": "https://amarolab.ucsd.edu/files/p53/odemir/fl_p53_Anton/md_trajectories/wt/wt_sim2_7.5us_trajectory_alignedwrt_DBDbackbones.dcd",
+     "bytes": 10244875196,
+     "frames": 31250,
+     "atoms": 27313,
+     "header_bytes": 196,
+     "bytes_per_frame": 327836
+    },
+    {
+     "id": "wt_sim3",
+     "url": "https://amarolab.ucsd.edu/files/p53/odemir/fl_p53_Anton/md_trajectories/wt/wt_sim3_7.5us_trajectory_alignedwrt_DBDbackbones.dcd",
+     "bytes": 10244875196,
+     "frames": 31250,
+     "atoms": 27313,
+     "header_bytes": 196,
+     "bytes_per_frame": 327836
+    }
+   ]
+  },
+  {
+   "id": "g245s",
+   "label": "G245S cancer mutant",
+   "mutation": "G245S",
+   "topology": {
+    "psf_url": "https://amarolab.ucsd.edu/files/p53/odemir/fl_p53_Anton/md_trajectories/g245s_mutant/p53_tet_p21_smaller_g245s_ZAFF_dry_segnames_corResid.psf",
+    "psf_bytes": 2616511,
+    "prmtop_url": "https://amarolab.ucsd.edu/files/p53/odemir/fl_p53_Anton/md_trajectories/g245s_mutant/p53_tet_p21_smaller_g245s_ZAFF_dry.prmtop",
+    "prmtop_bytes": 11752650,
+    "use": "psf_url"
+   },
+   "replicas": [
+    {
+     "id": "g245s_sim1",
+     "url": "https://amarolab.ucsd.edu/files/p53/odemir/fl_p53_Anton/md_trajectories/g245s_mutant/g245s_sim1_7.5us_trajectory_alignedwrt_DBDbackbones.dcd",
+     "bytes": 10250875196,
+     "frames": 31250,
+     "atoms": 27329,
+     "header_bytes": 196,
+     "bytes_per_frame": 328028
+    },
+    {
+     "id": "g245s_sim2",
+     "url": "https://amarolab.ucsd.edu/files/p53/odemir/fl_p53_Anton/md_trajectories/g245s_mutant/g245s_sim2_7.5us_trajectory_alignedwrt_DBDbackbones.dcd",
+     "bytes": 10250875196,
+     "frames": 31250,
+     "atoms": 27329,
+     "header_bytes": 196,
+     "bytes_per_frame": 328028
+    },
+    {
+     "id": "g245s_sim3",
+     "url": "https://amarolab.ucsd.edu/files/p53/odemir/fl_p53_Anton/md_trajectories/g245s_mutant/g245s_sim3_7.5us_trajectory_alignedwrt_DBDbackbones.dcd",
+     "bytes": 10250875196,
+     "frames": 31250,
+     "atoms": 27329,
+     "header_bytes": 196,
+     "bytes_per_frame": 328028
+    }
+   ]
+  },
+  {
+   "id": "y220c",
+   "label": "Y220C cancer mutant",
+   "mutation": "Y220C",
+   "topology": {
+    "psf_url": "https://amarolab.ucsd.edu/files/p53/odemir/fl_p53_Anton/md_trajectories/y220c_mutant/p53_tet_p21_smaller_y220c_ZAFF_dry_segnames_corResid.psf",
+    "psf_bytes": 2611105,
+    "prmtop_url": "https://amarolab.ucsd.edu/files/p53/odemir/fl_p53_Anton/md_trajectories/y220c_mutant/p53_tet_p21_smaller_y220c_ZAFF_dry.prmtop",
+    "prmtop_bytes": 11727479,
+    "use": "psf_url"
+   },
+   "replicas": [
+    {
+     "id": "y220c_sim1",
+     "url": "https://amarolab.ucsd.edu/files/p53/odemir/fl_p53_Anton/md_trajectories/y220c_mutant/y220c_sim1_7.5us_trajectory_alignedwrt_DBDbackbones.dcd",
+     "bytes": 10229875196,
+     "frames": 31250,
+     "atoms": 27273,
+     "header_bytes": 196,
+     "bytes_per_frame": 327356
+    },
+    {
+     "id": "y220c_sim2",
+     "url": "https://amarolab.ucsd.edu/files/p53/odemir/fl_p53_Anton/md_trajectories/y220c_mutant/y220c_sim2_7.5us_trajectory_alignedwrt_DBDbackbones.dcd",
+     "bytes": 10229875196,
+     "frames": 31250,
+     "atoms": 27273,
+     "header_bytes": 196,
+     "bytes_per_frame": 327356
+    },
+    {
+     "id": "y220c_sim3",
+     "url": "https://amarolab.ucsd.edu/files/p53/odemir/fl_p53_Anton/md_trajectories/y220c_mutant/y220c_sim3_7.5us_trajectory_alignedwrt_DBDbackbones.dcd",
+     "bytes": 10229875196,
+     "frames": 31250,
+     "atoms": 27273,
+     "header_bytes": 196,
+     "bytes_per_frame": 327356
+    }
+   ]
+  }
+ ],
+ "selections": {
+  "verified_against": "wt psf + 5 strided frames, MDAnalysis 2.11.0, 2026-11-11",
+  "segments": {
+   "MON1..MON4": "the four p53 monomers, 393 residues each",
+   "DNA": "p21 response-element duplex, 100 nucleotides",
+   "ZN1..ZN4": "one zinc ion each"
+  },
+  "good": {
+   "one monomer": "segid MON1",
+   "all four monomers": "segid MON1 MON2 MON3 MON4",
+   "alpha carbons": "name CA",
+   "DNA-binding domain": "segid MON1 and name CA and resid 94:292",
+   "the DNA": "segid DNA",
+   "the zincs": "segid ZN1 ZN2 ZN3 ZN4",
+   "mutation site G245S": "segid MON1 and resid 245",
+   "mutation site Y220C": "segid MON1 and resid 220"
+  },
+  "traps": {
+   "protein": "Returns 23944 atoms / 1556 residues and SILENTLY OMITS 16 residues - the ZAFF zinc-coordinating ones, resnames CY2 and HE1, four per monomer. Those sit in the DBD next to the mutation sites, so `protein` drops exactly the residues these questions are about. Use segid selections.",
+   "resname ZN": "Returns 0 atoms. The zinc resname is ZN2, not ZN; select by segid.",
+   "backbone": "6224 atoms - same omission as `protein`, for the same reason."
+  },
+  "counts_to_expect": {
+   "atoms_total_wt": 27313,
+   "CA_per_monomer": 393,
+   "CA_in_DBD_per_monomer": 199,
+   "residues_per_monomer": 393
+  }
+ },
+ "derived_products_published_by_the_lab": {
+  "last_frames": [
+   "https://amarolab.ucsd.edu/files/p53/odemir/fl_p53_Anton/last_frames/g245s_sim1_7.5us_last_frame.pdb",
+   "https://amarolab.ucsd.edu/files/p53/odemir/fl_p53_Anton/last_frames/g245s_sim2_7.5us_last_frame.pdb",
+   "https://amarolab.ucsd.edu/files/p53/odemir/fl_p53_Anton/last_frames/g245s_sim3_7.5us_last_frame.pdb",
+   "https://amarolab.ucsd.edu/files/p53/odemir/fl_p53_Anton/last_frames/wt_sim1_7.5us_lastframe.pdb",
+   "https://amarolab.ucsd.edu/files/p53/odemir/fl_p53_Anton/last_frames/wt_sim2_7.5us_lastframe.pdb",
+   "https://amarolab.ucsd.edu/files/p53/odemir/fl_p53_Anton/last_frames/wt_sim3_7.5us_lastframe.pdb",
+   "https://amarolab.ucsd.edu/files/p53/odemir/fl_p53_Anton/last_frames/y220c_sim1_7.5us_lastframe.pdb",
+   "https://amarolab.ucsd.edu/files/p53/odemir/fl_p53_Anton/last_frames/y220c_sim2_7.5us_lastframe.pdb",
+   "https://amarolab.ucsd.edu/files/p53/odemir/fl_p53_Anton/last_frames/y220c_sim3_7.5us_lastframe.pdb"
+  ],
+  "pca_extremes": [
+   "https://amarolab.ucsd.edu/files/p53/odemir/fl_p53_Anton/PCA_tetramerCA_DBD/ftmap_dir/g245s_PC1_max_results/g245s_PC1_max_fftmap.pdb",
+   "https://amarolab.ucsd.edu/files/p53/odemir/fl_p53_Anton/PCA_tetramerCA_DBD/ftmap_dir/g245s_PC1_min_results/g245s_PC1_min_fftmap.pdb",
+   "https://amarolab.ucsd.edu/files/p53/odemir/fl_p53_Anton/PCA_tetramerCA_DBD/ftmap_dir/wt_PC2_max_results/wt_PC2_max_fftmap.pdb",
+   "https://amarolab.ucsd.edu/files/p53/odemir/fl_p53_Anton/PCA_tetramerCA_DBD/ftmap_dir/wt_PC2_min_results/wt_PC2_min_fftmap.pdb",
+   "https://amarolab.ucsd.edu/files/p53/odemir/fl_p53_Anton/PCA_tetramerCA_DBD/g245s_PC1_max.pdb",
+   "https://amarolab.ucsd.edu/files/p53/odemir/fl_p53_Anton/PCA_tetramerCA_DBD/g245s_PC1_min.pdb",
+   "https://amarolab.ucsd.edu/files/p53/odemir/fl_p53_Anton/PCA_tetramerCA_DBD/g245s_PC2_max.pdb",
+   "https://amarolab.ucsd.edu/files/p53/odemir/fl_p53_Anton/PCA_tetramerCA_DBD/g245s_PC2_min.pdb",
+   "https://amarolab.ucsd.edu/files/p53/odemir/fl_p53_Anton/PCA_tetramerCA_DBD/wt_PC1_max.pdb",
+   "https://amarolab.ucsd.edu/files/p53/odemir/fl_p53_Anton/PCA_tetramerCA_DBD/wt_PC1_min.pdb",
+   "https://amarolab.ucsd.edu/files/p53/odemir/fl_p53_Anton/PCA_tetramerCA_DBD/wt_PC2_max.pdb",
+   "https://amarolab.ucsd.edu/files/p53/odemir/fl_p53_Anton/PCA_tetramerCA_DBD/wt_PC2_max_chainB.pdb",
+   "https://amarolab.ucsd.edu/files/p53/odemir/fl_p53_Anton/PCA_tetramerCA_DBD/wt_PC2_min.pdb",
+   "https://amarolab.ucsd.edu/files/p53/odemir/fl_p53_Anton/PCA_tetramerCA_DBD/wt_origin.pdb",
+   "https://amarolab.ucsd.edu/files/p53/odemir/fl_p53_Anton/PCA_tetramerCA_DBD/y220c_PC1_max.pdb",
+   "https://amarolab.ucsd.edu/files/p53/odemir/fl_p53_Anton/PCA_tetramerCA_DBD/y220c_PC1_min.pdb",
+   "https://amarolab.ucsd.edu/files/p53/odemir/fl_p53_Anton/PCA_tetramerCA_DBD/y220c_PC2_max.pdb",
+   "https://amarolab.ucsd.edu/files/p53/odemir/fl_p53_Anton/PCA_tetramerCA_DBD/y220c_PC2_min.pdb"
+  ]
+ }
+}
