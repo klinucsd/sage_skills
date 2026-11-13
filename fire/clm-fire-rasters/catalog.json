@@ -35,7 +35,8 @@
         30.0,
         30.0
       ],
-      "nodata": [
+      "nodata": -3.4028230607370965e+38,
+      "nodata_values": [
         "-3.4028230607370965E38"
       ],
       "field_name": "GRAY_INDEX",
@@ -76,7 +77,8 @@
         30.0,
         30.0
       ],
-      "nodata": [
+      "nodata": -128.0,
+      "nodata_values": [
         "-128.0"
       ],
       "field_name": "GRAY_INDEX",
@@ -116,7 +118,8 @@
         30.0,
         30.0
       ],
-      "nodata": [
+      "nodata": -128.0,
+      "nodata_values": [
         "-128.0"
       ],
       "field_name": "GRAY_INDEX",
@@ -156,7 +159,8 @@
         30.0,
         30.0
       ],
-      "nodata": [
+      "nodata": 15.0,
+      "nodata_values": [
         "15.0"
       ],
       "field_name": "PALETTE_INDEX",
@@ -197,7 +201,8 @@
         1000.0,
         1000.0
       ],
-      "nodata": [
+      "nodata": -3.4028230607370965e+38,
+      "nodata_values": [
         "-3.4028230607370965E38"
       ],
       "field_name": "GRAY_INDEX",
@@ -238,7 +243,8 @@
         1000.0,
         1000.0
       ],
-      "nodata": [
+      "nodata": -3.4028230607370965e+38,
+      "nodata_values": [
         "-3.4028230607370965E38"
       ],
       "field_name": "GRAY_INDEX",
@@ -279,7 +285,8 @@
         30.0,
         30.0
       ],
-      "nodata": [
+      "nodata": -3.4028230607370965e+38,
+      "nodata_values": [
         "-3.4028230607370965E38"
       ],
       "field_name": "GRAY_INDEX",
@@ -319,7 +326,8 @@
         30.0,
         30.0
       ],
-      "nodata": [
+      "nodata": -3.4028230607370965e+38,
+      "nodata_values": [
         "-3.4028230607370965E38"
       ],
       "field_name": "GRAY_INDEX",
@@ -359,7 +367,8 @@
         30.0,
         30.0
       ],
-      "nodata": [
+      "nodata": -3.4028230607370965e+38,
+      "nodata_values": [
         "-3.4028230607370965E38"
       ],
       "field_name": "GRAY_INDEX",
@@ -399,7 +408,8 @@
         30.0,
         30.0
       ],
-      "nodata": [
+      "nodata": 255.0,
+      "nodata_values": [
         "255.0"
       ],
       "field_name": "GRAY_INDEX",

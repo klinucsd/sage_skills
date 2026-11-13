@@ -74,6 +74,11 @@ always true at script top level, so guarding on it does not help.
 Every extent, resolution and nodata value in `catalog.json` was measured from
 `DescribeCoverage`, not assumed. Read them from there rather than hardcoding.
 
+`nodata` is a **float, or `None`** — use it directly, no parsing. (`nodata_values`
+beside it holds the raw published strings, since WCS permits several nil values;
+you will not normally need it.) The fetched GeoTIFF's own `src.nodata` carries the
+same value, so either source is fine.
+
 ## Step 2 — Check coverage before computing anything
 
 This is the step that keeps the answers honest. The collection mixes statewide and
