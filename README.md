@@ -25,7 +25,7 @@ Skills are organized by discipline. Each top-level folder collects related domai
 | `topography/` | Elevation, LiDAR point clouds, DEMs, canopy height. `usgs-lidar`, `gedi-l2a`, `cop30-topo`, `py3dep-dem`. |
 | `hydrography/` | Rivers, floods, watershed analysis, Kanawha demo set, Po-basin groundwater wells. `nhd-rivers`, `kanawha-flood-depth`, `kanawha-reach-impact`, `kanawha-cikr-impact`, `kanawha-nsi-impact`. Italian groundwater (under `hydrography/groundwater/italy/`): `po-wells`, `po-wells-timeseries`, `er-well-registry`. |
 | `remote-sensing/` | Satellite imagery and SAR. `sentinel1-sar`, `sentinel2-l2a`. |
-| `fire/` | Wildfire detections, surface fuels, vegetation treatments. `sdge-goes-fire`, `sdge-surface-fuels`, `ca-vegetation-treatments`. |
+| `fire/` | Wildfire detections, surface fuels, vegetation treatments, fire likelihood and severity, roadway vulnerability, roadside vegetation, planned project pipelines. `sdge-goes-fire`, `sdge-surface-fuels`, `ca-vegetation-treatments`, `clm-fire-rasters`, `caltrans-road-vulnerability`, `roadside-vegetation`, `planned-treatments`. |
 | `hazards/` | Earthquakes and other natural hazards. `usgs-earthquake-events`. |
 | `astronomy/` | Astronomical data products. `exoplanet-transits`. |
 | `structural-biology/` | Biomolecular simulation datasets. `amaro-datasets` (Amaro Lab MD: SARS-CoV-2 nsp14/nsp10/RNA, spike, ACE2-RBD, HIV-1 Env, influenza whole virion). |

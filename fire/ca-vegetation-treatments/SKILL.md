@@ -15,7 +15,7 @@ https://sparcal.sdsc.edu/arcgis/rest/services/Hosted/ITS_V2_0_Activity_webmap_gd
 
 **Service Details:**
 - Geographic coverage: **California only** (counties, regions, and ownership groups are CA-specific)
-- Geometry type: Point (one point per activity record)
+- Geometry type: Point — but **the points are aggregated, not located**. See the warning below before using them spatially.
 - Maximum record count per request: 2000 (pagination supported)
 - Native spatial reference: EPSG:3857 (Web Mercator); the query function below sends `inSR=4326` (so the bbox is interpreted as WGS84) and `outSR=4326` (so results come back in WGS84). **Both must be set** — without `inSR=4326`, the server interprets the WGS84 bbox as Web Mercator coordinates and returns zero features.
 - Total records: ~168,000 activities
@@ -38,6 +38,70 @@ The service returns the following columns:
 - **year_txt**: Year of the activity as text (e.g., "2023")
 - **valid_geom**: Geometry validity flag (e.g., "VALID")
 - **entity_type**: Reporting entity type (e.g., "State", "Federal")
+
+## ⚠️ IMPORTANT: The activity points are not treatment locations
+
+The geometry on this service is aggregated onto a small number of representative
+coordinates. Measured 2026-11-12: **2,000 Southern California `ROAD_CLEAR` records
+return 20 distinct coordinates, with 490 records stacked on a single point.**
+
+**Never answer a proximity, overlay or distance question from this service.** "Which
+treatments are near this road / parcel / watershed" computed from these points measures
+which features happen to lie near one of the cluster coordinates, and the answer looks
+entirely reasonable while being wrong — in one measured case it identified 18 of 35 road
+corridors as having nearby treatment when the true figure was 34, with a different
+ranking.
+
+**Use the treatment footprint polygons instead**, which carry real extents — 38,129
+polygons, median 1.7 ha:
+
+```python
+FOOTPRINTS = "ITS:footprint_report_20251027_polygon_3310"   # WFS, already EPSG:3310
+WFS = "https://sparcal.sdsc.edu/geoserver/ITS/wfs"
+
+def its_footprints(bbox_3310, extra=None, page=10_000):
+    """Treatment footprint polygons in a bounding box, as a GeoDataFrame (EPSG:3310)."""
+    import geopandas as gpd, pandas as pd, requests
+    minx, miny, maxx, maxy = bbox_3310
+    cql = f"BBOX(geom,{minx},{miny},{maxx},{maxy},'EPSG:3310')"
+    if extra:
+        cql += f" AND ({extra})"
+    frames, start = [], 0
+    while True:
+        r = requests.get(WFS, timeout=600, params={
+            "service": "WFS", "version": "2.0.0", "request": "GetFeature",
+            "typeNames": FOOTPRINTS, "outputFormat": "application/json",
+            "srsName": "EPSG:3310", "count": page, "startIndex": start,
+            "CQL_FILTER": cql})
+        r.raise_for_status()
+        feats = r.json().get("features", [])
+        if not feats:
+            break
+        frames.append(gpd.GeoDataFrame.from_features(feats, crs="EPSG:3310"))
+        start += page
+        if len(feats) < page:
+            break
+    if not frames:
+        return gpd.GeoDataFrame(geometry=[], crs="EPSG:3310")
+    return pd.concat(frames, ignore_index=True).pipe(gpd.GeoDataFrame, crs="EPSG:3310")
+```
+
+Note the trade-off: the footprint layer carries **no activity type**, so it cannot be
+filtered to prescribed fire, thinning or road clearing. Real geometry without type, or
+type without real geometry — say in your answer which you used.
+
+Two further cautions when summing from footprints:
+
+- **Take acres from the geometry**, not `activity_quantity`. On the footprint layer that
+  field tracks polygon area for small records but caps near 13 while real footprints reach
+  2,289 acres (correlation 0.12 across a 3,000-record sample).
+- **Clip to your area of interest before summing.** A footprint that merely touches a
+  buffer counts in full otherwise; on one measured road set that overstated adjacent
+  treatment by **15×** (227,170 acres against 15,184 actually within 1000 ft).
+
+This service remains the right source for everything non-spatial: totals, and breakdowns
+by agency, administering organization, activity category, ownership, vegetation type,
+county, region or year.
 
 ## ⚠️ IMPORTANT: All Categorical Fields Use Coded Values
 
@@ -143,8 +207,12 @@ Use this skill to:
 - Find treatments by administering organization (CAL FIRE, USFS, etc.)
 - Filter treatments by ownership group, vegetation type, status, or year
 - Compute total acres treated by category, county, or year
-- Analyze the spatial distribution of vegetation treatment activities
-- Find recent or upcoming planned treatments
+- Summarise where treatment has happened **by county, region or ownership** — not by
+  proximity, which the aggregated point geometry cannot support (see the warning above)
+- Find **completed and active** treatments. This service records no planned or proposed
+  work at all: statewide it holds 157,585 `COMPLETE` and 10,534 `ACTIVE` records and
+  nothing else, so it answers only the "implemented" half of a "planned or implemented"
+  question
 
 ## How to Use
 

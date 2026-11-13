@@ -1,0 +1,476 @@
+{
+  "endpoint": "https://sparcal.sdsc.edu/geoserver/rrk/wcs",
+  "wcs_version": "2.0.1",
+  "coverages": {
+    "annual_burn_probability": {
+      "coverage_id": "rrk__annualburnprobability_202212_202406_t1_v5",
+      "srs": "http://www.opengis.net/def/crs/EPSG/0/3310",
+      "axis_labels": [
+        "X",
+        "Y"
+      ],
+      "lower_corner": [
+        -373991.3456999995,
+        -604455.2059000004
+      ],
+      "upper_corner": [
+        540078.6543000005,
+        455294.7940999996
+      ],
+      "grid": {
+        "nx": 30469,
+        "ny": 35325
+      },
+      "offset_vectors": [
+        [
+          30.0,
+          0.0
+        ],
+        [
+          0.0,
+          -30.0
+        ]
+      ],
+      "resolution": [
+        30.0,
+        30.0
+      ],
+      "nodata": [
+        "-3.4028230607370965E38"
+      ],
+      "field_name": "GRAY_INDEX",
+      "uom": "W.m-2.Sr-1",
+      "usable": true,
+      "note": "Extent differs from the six-layer 30 m group by about 11-15 m, so its grid is not pixel-aligned with them. Resample before combining layers cell by cell; zonal statistics per layer are unaffected."
+    },
+    "ignitions_all_causes": {
+      "coverage_id": "rrk__wldfireignallcauses_19922020_202312_t1_v5",
+      "srs": "http://www.opengis.net/def/crs/EPSG/0/3310",
+      "axis_labels": [
+        "X",
+        "Y"
+      ],
+      "lower_corner": [
+        -373979.99999999814,
+        -604440.0
+      ],
+      "upper_corner": [
+        540060.0000000019,
+        455280.0
+      ],
+      "grid": {
+        "nx": 30468,
+        "ny": 35324
+      },
+      "offset_vectors": [
+        [
+          30.0,
+          0.0
+        ],
+        [
+          0.0,
+          -30.0
+        ]
+      ],
+      "resolution": [
+        30.0,
+        30.0
+      ],
+      "nodata": [
+        "-128.0"
+      ],
+      "field_name": "GRAY_INDEX",
+      "uom": "W.m-2.Sr-1",
+      "usable": true
+    },
+    "ignitions_human": {
+      "coverage_id": "rrk__wldfireigncausehuman_19922020_202312_t1_v5",
+      "srs": "http://www.opengis.net/def/crs/EPSG/0/3310",
+      "axis_labels": [
+        "X",
+        "Y"
+      ],
+      "lower_corner": [
+        -373979.99999999814,
+        -604440.0
+      ],
+      "upper_corner": [
+        540060.0000000019,
+        455280.0
+      ],
+      "grid": {
+        "nx": 30468,
+        "ny": 35324
+      },
+      "offset_vectors": [
+        [
+          30.0,
+          0.0
+        ],
+        [
+          0.0,
+          -30.0
+        ]
+      ],
+      "resolution": [
+        30.0,
+        30.0
+      ],
+      "nodata": [
+        "-128.0"
+      ],
+      "field_name": "GRAY_INDEX",
+      "uom": "W.m-2.Sr-1",
+      "usable": true
+    },
+    "ignitions_lightning": {
+      "coverage_id": "rrk__wldfireigncauselightning_19922020_202312_t1_v5",
+      "srs": "http://www.opengis.net/def/crs/EPSG/0/3310",
+      "axis_labels": [
+        "X",
+        "Y"
+      ],
+      "lower_corner": [
+        -373979.99999999814,
+        -604440.0
+      ],
+      "upper_corner": [
+        540060.0000000019,
+        455280.0
+      ],
+      "grid": {
+        "nx": 30468,
+        "ny": 35324
+      },
+      "offset_vectors": [
+        [
+          30.0,
+          0.0
+        ],
+        [
+          0.0,
+          -30.0
+        ]
+      ],
+      "resolution": [
+        30.0,
+        30.0
+      ],
+      "nodata": [
+        "15.0"
+      ],
+      "field_name": "PALETTE_INDEX",
+      "uom": "W.m-2.Sr-1",
+      "usable": true,
+      "note": "nodata is declared as 15.0, a value inside the plausible data range rather than a sentinel. Masking it may discard real pixels; not masking it may admit fill. Check the histogram before trusting a mean from this layer."
+    },
+    "pred_ignition_human": {
+      "coverage_id": "rrk__predhumanigncause_19922015_202406_t3_v5",
+      "srs": "http://www.opengis.net/def/crs/EPSG/0/3310",
+      "axis_labels": [
+        "X",
+        "Y"
+      ],
+      "lower_corner": [
+        -373979.99999999814,
+        -604440.0
+      ],
+      "upper_corner": [
+        541020.0000000019,
+        455560.0
+      ],
+      "grid": {
+        "nx": 915,
+        "ny": 1060
+      },
+      "offset_vectors": [
+        [
+          1000.0,
+          0.0
+        ],
+        [
+          0.0,
+          -1000.0
+        ]
+      ],
+      "resolution": [
+        1000.0,
+        1000.0
+      ],
+      "nodata": [
+        "-3.4028230607370965E38"
+      ],
+      "field_name": "GRAY_INDEX",
+      "uom": "W.m-2.Sr-1",
+      "usable": true,
+      "note": "1000 m pixels. A 500 ft (152 m) buffer is smaller than one pixel, so a zonal statistic over it is effectively a point sample. Say so when reporting, or aggregate over a longer stretch of road."
+    },
+    "pred_ignition_lightning": {
+      "coverage_id": "rrk__predlightningIgncause_19922015_202406_t3_v5",
+      "srs": "http://www.opengis.net/def/crs/EPSG/0/3310",
+      "axis_labels": [
+        "X",
+        "Y"
+      ],
+      "lower_corner": [
+        -373979.99999999814,
+        -604440.0
+      ],
+      "upper_corner": [
+        541020.0000000019,
+        455560.0
+      ],
+      "grid": {
+        "nx": 915,
+        "ny": 1060
+      },
+      "offset_vectors": [
+        [
+          1000.0,
+          0.0
+        ],
+        [
+          0.0,
+          -1000.0
+        ]
+      ],
+      "resolution": [
+        1000.0,
+        1000.0
+      ],
+      "nodata": [
+        "-3.4028230607370965E38"
+      ],
+      "field_name": "GRAY_INDEX",
+      "uom": "W.m-2.Sr-1",
+      "usable": true,
+      "note": "1000 m pixels \u2014 same caveat as pred_ignition_human."
+    },
+    "fire_severity_prob_high": {
+      "coverage_id": "rrk__probfireseverityhigh_202208_202406_t1_v5",
+      "srs": "http://www.opengis.net/def/crs/EPSG/0/3310",
+      "axis_labels": [
+        "X",
+        "Y"
+      ],
+      "lower_corner": [
+        -373979.99999999814,
+        -604440.0
+      ],
+      "upper_corner": [
+        540060.0000000019,
+        455280.0
+      ],
+      "grid": {
+        "nx": 30468,
+        "ny": 35324
+      },
+      "offset_vectors": [
+        [
+          30.0,
+          0.0
+        ],
+        [
+          0.0,
+          -30.0
+        ]
+      ],
+      "resolution": [
+        30.0,
+        30.0
+      ],
+      "nodata": [
+        "-3.4028230607370965E38"
+      ],
+      "field_name": "GRAY_INDEX",
+      "uom": "W.m-2.Sr-1",
+      "usable": true
+    },
+    "fire_severity_prob_mod": {
+      "coverage_id": "rrk__probfireseveritymod_202208_202406_t1_v5",
+      "srs": "http://www.opengis.net/def/crs/EPSG/0/3310",
+      "axis_labels": [
+        "X",
+        "Y"
+      ],
+      "lower_corner": [
+        -373979.99999999814,
+        -604440.0
+      ],
+      "upper_corner": [
+        540060.0000000019,
+        455280.0
+      ],
+      "grid": {
+        "nx": 30468,
+        "ny": 35324
+      },
+      "offset_vectors": [
+        [
+          30.0,
+          0.0
+        ],
+        [
+          0.0,
+          -30.0
+        ]
+      ],
+      "resolution": [
+        30.0,
+        30.0
+      ],
+      "nodata": [
+        "-3.4028230607370965E38"
+      ],
+      "field_name": "GRAY_INDEX",
+      "uom": "W.m-2.Sr-1",
+      "usable": true
+    },
+    "fire_severity_prob_low": {
+      "coverage_id": "rrk__probfireseveritylow_202208_202406_t1_v5",
+      "srs": "http://www.opengis.net/def/crs/EPSG/0/3310",
+      "axis_labels": [
+        "X",
+        "Y"
+      ],
+      "lower_corner": [
+        -373979.99999999814,
+        -604440.0
+      ],
+      "upper_corner": [
+        540060.0000000019,
+        455280.0
+      ],
+      "grid": {
+        "nx": 30468,
+        "ny": 35324
+      },
+      "offset_vectors": [
+        [
+          30.0,
+          0.0
+        ],
+        [
+          0.0,
+          -30.0
+        ]
+      ],
+      "resolution": [
+        30.0,
+        30.0
+      ],
+      "nodata": [
+        "-3.4028230607370965E38"
+      ],
+      "field_name": "GRAY_INDEX",
+      "uom": "W.m-2.Sr-1",
+      "usable": true
+    },
+    "fire_severity_class_max": {
+      "coverage_id": "rrk__fire_severity_class_max_2012to2021_all_ca_v2",
+      "srs": "http://www.opengis.net/def/crs/EPSG/0/3310",
+      "axis_labels": [
+        "X",
+        "Y"
+      ],
+      "lower_corner": [
+        -2614583.8119731266,
+        1212363.832999289
+      ],
+      "upper_corner": [
+        -1482323.8119731266,
+        2458713.832999289
+      ],
+      "grid": {
+        "nx": 37742,
+        "ny": 41545
+      },
+      "offset_vectors": [
+        [
+          30.0,
+          0.0
+        ],
+        [
+          0.0,
+          -30.0
+        ]
+      ],
+      "resolution": [
+        30.0,
+        30.0
+      ],
+      "nodata": [
+        "255.0"
+      ],
+      "field_name": "GRAY_INDEX",
+      "uom": "W.m-2.Sr-1",
+      "usable": false,
+      "data_crs": "EPSG:5070",
+      "note": "Served as EPSG:3310 but the coordinates are CONUS Albers. Its declared extent [-2614584,1212364 .. -1482324,2458714] is not California in 3310; the SCIRP corridors reproject into it only under EPSG:5070. A correct 3310 query returns nothing and a naive reprojection returns garbage. Do not use without resolving the CRS."
+    }
+  },
+  "extent_groups": [
+    {
+      "srs": "3310",
+      "lower": [
+        -373991.3,
+        -604455.2
+      ],
+      "upper": [
+        540078.7,
+        455294.8
+      ],
+      "coverages": [
+        "annual_burn_probability"
+      ]
+    },
+    {
+      "srs": "3310",
+      "lower": [
+        -373980.0,
+        -604440.0
+      ],
+      "upper": [
+        540060.0,
+        455280.0
+      ],
+      "coverages": [
+        "ignitions_all_causes",
+        "ignitions_human",
+        "ignitions_lightning",
+        "fire_severity_prob_high",
+        "fire_severity_prob_mod",
+        "fire_severity_prob_low"
+      ]
+    },
+    {
+      "srs": "3310",
+      "lower": [
+        -373980.0,
+        -604440.0
+      ],
+      "upper": [
+        541020.0,
+        455560.0
+      ],
+      "coverages": [
+        "pred_ignition_human",
+        "pred_ignition_lightning"
+      ]
+    },
+    {
+      "srs": "3310",
+      "lower": [
+        -2614583.8,
+        1212363.8
+      ],
+      "upper": [
+        -1482323.8,
+        2458713.8
+      ],
+      "coverages": [
+        "fire_severity_class_max"
+      ]
+    }
+  ]
+}

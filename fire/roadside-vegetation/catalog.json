@@ -1,0 +1,53 @@
+{
+  "domains": {
+    "Cover_Type": {
+      "description": "Cover Type",
+      "values": {
+        "1": "Conifer Forest",
+        "2": "Oak Woodland",
+        "3": "Mixed Conifer/Hardwood",
+        "4": "Riparian",
+        "5": "Shrubland",
+        "6": "Grassland",
+        "7": "Urban",
+        "8": "Rock/Barren"
+      }
+    },
+    "NonNative_Cover": {
+      "description": "Absolute cover of non-native annual",
+      "values": {
+        "4": "75-100%",
+        "3": "50-75%",
+        "2": "10-50%",
+        "1": "<10%",
+        "5": "Urban"
+      }
+    },
+    "GroundSurface": {
+      "description": "Soil/Ground Surface",
+      "values": {
+        "1": "Native",
+        "2": "Cut Slope",
+        "3": "Fill Slope",
+        "4": "Urban"
+      }
+    }
+  },
+  "layers": {
+    "priority_1": {
+      "url": "https://services1.arcgis.com/8CpMUd3fdw6aXef7/arcgis/rest/services/Roadside_buffer_30ft_Priority_1/FeatureServer/0",
+      "n": 12279,
+      "sr": 26911
+    },
+    "priority_2": {
+      "url": "https://services1.arcgis.com/8CpMUd3fdw6aXef7/arcgis/rest/services/SCRIP_Roadside_Assessment_Priorities/FeatureServer/2",
+      "n": 11174,
+      "sr": 26911
+    }
+  },
+  "nonnative_over_50pct_codes": [
+    3,
+    4
+  ],
+  "urban_code": 5
+}
