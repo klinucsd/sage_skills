@@ -188,22 +188,25 @@ def veg_summary(gdf, feet=100, include_priority_2=True,
     """
     hit = veg_near(gdf, feet=feet, include_priority_2=include_priority_2)
     target = gdf.to_crs(3310)
-    rows = []
-    for idx in target.index:
-        h = hit[hit.target_index == idx] if len(hit) else hit
-        acres = float(h.Acres.sum()) if len(h) else 0.0
-        over = h[h.NonNative_Cover.isin(VEG["nonnative_over_50pct_codes"])] if len(h) else h
-        urban = h[h.NonNative_Cover == VEG["urban_code"]] if len(h) else h
-        rows.append({
-            "index": idx,
-            "veg_polygons": len(h),
-            "veg_acres": acres,
-            "acres_over_50pct_nonnative": float(over.Acres.sum()) if len(over) else 0.0,
-            "share_over_50pct_nonnative": (float(over.Acres.sum()) / acres) if acres else float("nan"),
-            "acres_urban_class": float(urban.Acres.sum()) if len(urban) else 0.0,
-            "assessed": len(h) > 0,
-        })
-    out = pd.DataFrame(rows).set_index("index")
+    # One grouped pass, so this is as fast for 1,600 segments as for 35 corridors.
+    if len(hit):
+        h = hit.assign(
+            over=hit.Acres.where(hit.NonNative_Cover.isin(VEG["nonnative_over_50pct_codes"]), 0.0),
+            urban=hit.Acres.where(hit.NonNative_Cover == VEG["urban_code"], 0.0))
+        g = h.groupby("target_index").agg(veg_polygons=("Acres", "size"), veg_acres=("Acres", "sum"),
+                                          acres_over_50pct_nonnative=("over", "sum"),
+                                          acres_urban_class=("urban", "sum"))
+    else:
+        g = pd.DataFrame(columns=["veg_polygons", "veg_acres",
+                                  "acres_over_50pct_nonnative", "acres_urban_class"])
+    out = g.reindex(target.index)
+    out["veg_polygons"] = out.veg_polygons.fillna(0).astype(int)
+    for c in ("veg_acres", "acres_over_50pct_nonnative", "acres_urban_class"):
+        out[c] = out[c].fillna(0.0).astype(float)
+    out["share_over_50pct_nonnative"] = (out.acres_over_50pct_nonnative / out.veg_acres).where(out.veg_acres > 0)
+    out["assessed"] = out.veg_polygons > 0
+    out = out[["veg_polygons", "veg_acres", "acres_over_50pct_nonnative",
+               "share_over_50pct_nonnative", "acres_urban_class", "assessed"]]
     carry = [c for c in keep if c in gdf.columns]
     if carry:
         out = out.join(gdf[carry])
@@ -213,6 +216,33 @@ def veg_summary(gdf, feet=100, include_priority_2=True,
 `assessed` matters: this mapping covers *priority* roads, not all roads, so a
 corridor with no polygons has **not been assessed** — which is different from
 having no non-native cover. Never report 0% non-native for an unassessed corridor.
+
+### One function at every level, so the levels agree
+
+Use `veg_summary` for whatever you are scoring — whole corridors, half-mile segments,
+anything else — and pass the identifiers through `keep`:
+
+```python
+by_corridor = veg_summary(corridors, keep=("corridor_fid", "Corridor_N"))
+by_segment  = veg_summary(segments,  keep=("segment_id", "corridor_fid", "Corridor_N"))
+```
+
+Do not write a second join for segments. Two methods give two different answers for
+the same question, and the reader sees both. With one function the levels are
+consistent by construction: **a corridor is assessed exactly when at least one of its
+segments is**, so these two counts must match, and checking them is a quick test of
+your own code:
+
+```python
+n_corr = int(by_corridor.assessed.sum())
+n_from_segs = by_segment[by_segment.assessed].corridor_fid.nunique()
+assert n_corr == n_from_segs, (n_corr, n_from_segs)
+```
+
+A statistic you compute only where a corridor has enough assessed segments — a spread
+or concentration measure that needs at least three, say — is a *different* count from
+"corridors with vegetation data". Name it for what it is ("12 corridors have the three
+assessed segments a spread measure needs"), never as the number assessed.
 
 ## How fast this should be
 
@@ -272,6 +302,15 @@ Commons-catalogue-only analysis, and say which you used.
 
 **5. Weight by `Acres`, not polygon count.** Polygons vary widely in size, so a
 plain mean of class codes is meaningless.
+
+**6. The line must be on the road.** These polygons are a 30 ft strip along the actual
+pavement, and a 100 ft buffer only reaches them if your line follows the road closely.
+A hand-drawn or generalised line a few hundred feet off finds few polygons, or polygons
+from a different stretch, and returns a share computed on the wrong ground — with no
+error, and with `assessed` still True. Before measuring, know how far your geometry is
+from the real road: use centerlines from a road network where you have them, and if
+you only have sketched lines, say in the answer that the roadside measures depend on
+their accuracy.
 
 ## Dependencies
 
