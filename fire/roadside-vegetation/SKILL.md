@@ -219,7 +219,7 @@ having no non-native cover. Never report 0% non-native for an unassessed corrido
 
 ### One function at every level, so the levels agree
 
-Use `veg_summary` for whatever you are scoring — whole corridors, half-mile segments,
+Use `veg_summary` for whatever you are scoring — whole corridors, projects, segments,
 anything else — and pass the identifiers through `keep`:
 
 ```python

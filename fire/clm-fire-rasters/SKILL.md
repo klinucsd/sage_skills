@@ -1,21 +1,23 @@
 ---
 name: clm-fire-rasters
-description: California Landscape Metrics fire rasters served by WCS — annual burn probability, wildfire ignition counts by cause (all, human, lightning), predicted ignition cause, and probability of low/moderate/high fire severity, statewide at 30 m. Use for burn probability, ignition density, fire severity likelihood, wildfire risk along roads or inside polygons. Reads only the window a question needs, so a corridor-sized zonal statistic moves about a megabyte instead of the 4.3 GB statewide raster.
+description: California Landscape Metrics fire data — annual burn probability, probability of low/moderate/high fire severity and predicted ignition probability as 30 m rasters (WCS), plus the 251,954 recorded wildfire ignitions in California 1992–2020 as points (WFS) with year, cause and size. Use for burn probability, ignition density, ignitions near roads, human-caused ignitions, fire severity likelihood, wildfire risk along roads or inside polygons. Reads only the window a question needs, never the 4.3 GB statewide raster.
 ---
 
 # California Landscape Metrics — fire rasters
 
 Ten fire coverages from the California Regional Resource Kits, served from SDSC's
-GeoServer as WCS 2.0.1. Native CRS **EPSG:3310**, mostly 30 m.
+GeoServer as WCS 2.0.1. Native CRS **EPSG:3310**, mostly 30 m. The ignition records
+behind CLM's ignition layers are served as points (WFS) from the same server — use
+those for ignition counts and density (Step 4).
 
 **Endpoint:** `https://sparcal.sdsc.edu/geoserver/rrk/wcs`
 
 | Key | What it is | Resolution |
 | --- | --- | --- |
 | `annual_burn_probability` | modelled annual probability of burning | 30 m |
-| `ignitions_all_causes` | observed ignition counts 1992–2020 | 30 m |
-| `ignitions_human` | human-caused subset | 30 m |
-| `ignitions_lightning` | lightning-caused subset | 30 m |
+| `ignitions_all_causes` | most frequent ignition cause per cell, 1992–2020 — **a category code, not a count; see Step 4** | 30 m |
+| `ignitions_human` | the same, human-caused records | 30 m |
+| `ignitions_lightning` | the same, lightning-caused records | 30 m |
 | `pred_ignition_human` | predicted human ignition cause 1992–2015 | **1000 m** |
 | `pred_ignition_lightning` | predicted lightning ignition cause | **1000 m** |
 | `fire_severity_prob_high` / `_mod` / `_low` | probability of each severity class | 30 m |
@@ -218,6 +220,104 @@ exactly the moment you combine these results with anything else — and the resu
 then looks fully covered. A column survives those operations and prints with the
 table.
 
+## Step 4 — Ignition density, from the ignition records themselves
+
+**For "how many fires started here", count the ignition points — never the
+`ignitions_*` rasters.** Those rasters are categorical: CLM converted the points to
+30 m cells holding the *most frequent cause* among the records in each cell (CLM
+Metric Dictionary, "Ignition Cause"). A pixel value is a code, so summing or
+averaging pixels gives a number with no meaning. Checked on SR-330 within 500 ft:
+the raster's non-zero pixels sum to 115, while the records there number 60.
+
+The records are CLM's `WildfireOccurrence_CA_1992_2020` layer, the U.S. Forest
+Service Fire Program Analysis fire-occurrence database (FPA FOD, Short 2022) for
+California: **251,954 ignitions, 1992–2020**, each with year, cause and final size.
+Served as WFS by the same GeoServer.
+
+```python
+import io
+import geopandas as gpd
+import pandas as pd
+
+IGN_WFS = "https://sparcal.sdsc.edu/geoserver/rrk/wfs"
+IGN_LAYER = "rrk:wildfireoccurrence_19922020_202312_t1_v5"
+IGN_FIELDS = "FOD_ID,FIRE_YEAR,NWCG_CAUSE,NWCG_GENER,FIRE_SIZE"
+IGN_YEARS = (1992, 2020)
+SQ_MI = 2_589_988.11          # square metres per square mile
+
+def clm_ignitions_near(gdf, feet=500, fields=IGN_FIELDS, page=10_000):
+    """Ignition records within `feet` of each feature in gdf, in EPSG:3310.
+
+    One bounding-box request per feature (the same reason as clm_zonal: features
+    spread over a region share a box far bigger than themselves), then an exact
+    within-test against the feature's buffer. Returns the records with a
+    `target_index` naming the gdf row each matched; a record near two features
+    appears once for each.
+    """
+    target = gdf.to_crs(3310)
+    parts = []
+    for idx, geom in zip(target.index, target.geometry):
+        zone = geom.buffer(feet * FEET) if feet else geom
+        x0, y0, x1, y1 = zone.bounds
+        got, start = [], 0
+        while True:
+            r = requests.get(IGN_WFS, timeout=300, params={
+                "service": "WFS", "version": "2.0.0", "request": "GetFeature",
+                "typeNames": IGN_LAYER, "outputFormat": "application/json",
+                "srsName": "EPSG:3310", "bbox": f"{x0},{y0},{x1},{y1},EPSG:3310",
+                "propertyName": fields + ",the_geom", "sortBy": "FOD_ID",
+                "count": page, "startIndex": start})
+            r.raise_for_status()
+            pts = gpd.read_file(io.BytesIO(r.content))
+            if len(pts):
+                # asked for in EPSG:3310; the response labels it in URN form
+                got.append(pts.set_crs(3310, allow_override=True))
+            if len(pts) < page:
+                break
+            start += page
+        if not got:
+            continue
+        pts = pd.concat(got, ignore_index=True)
+        pts = pts[pts.within(zone)]
+        if len(pts):
+            parts.append(pts.assign(target_index=idx))
+    if not parts:
+        return gpd.GeoDataFrame({"target_index": []}, geometry=[], crs="EPSG:3310")
+    return pd.concat(parts, ignore_index=True).pipe(gpd.GeoDataFrame, crs="EPSG:3310")
+
+
+def clm_ignition_density(gdf, feet=500, keep=("corridor_fid", "Corridor_N", "Zone")):
+    """Ignitions per square mile per decade within `feet` of each feature, 1992-2020.
+
+    Density is per area of the search zone, so it does not grow with a feature's
+    length: a 70-mile road and a 2-mile road with the same fire history score the
+    same. Counts are given too.
+    """
+    target = gdf.to_crs(3310)
+    pts = clm_ignitions_near(target, feet=feet)
+    zone_sq_mi = (target.geometry.buffer(feet * FEET) if feet else target.geometry).area / SQ_MI
+    decades = (IGN_YEARS[1] - IGN_YEARS[0] + 1) / 10
+    g = pts.groupby("target_index")
+    out = pd.DataFrame(index=target.index)
+    out["ignitions"] = g.size().reindex(target.index).fillna(0).astype(int)
+    out["ignitions_human"] = (pts[pts.NWCG_CAUSE == "Human"].groupby("target_index").size()
+                              .reindex(target.index).fillna(0).astype(int))
+    out["zone_sq_mi"] = zone_sq_mi
+    out["ignitions_per_sq_mi_decade"] = out.ignitions / zone_sq_mi / decades
+    carry = [c for c in keep if c in gdf.columns]
+    return out.join(gdf[carry]) if carry else out
+```
+
+Name the period and the unit whenever you report it: "ignitions per square mile per
+decade, 1992–2020, within 500 ft". `NWCG_CAUSE` is `Human`, `Natural`, or
+`Missing data/not specified/undetermined`; `NWCG_GENER` gives the general cause
+(equipment, arson, power lines, debris burning …).
+
+A record's location is only as precise as its reporting: FPA FOD requires a point at
+least as precise as a 1-square-mile survey section, and some records sit on a section
+centroid. Within a few hundred feet of a road this blurs individual ignitions, not
+the comparison between roads; say so if a reader might map single points.
+
 ## Never re-join results by position
 
 Every function here returns a frame **indexed like the input**, and that index is only
@@ -260,7 +360,7 @@ coverage to this skill, measure its extent with `DescribeCoverage` first.
 sample wearing a mean's clothing. Either aggregate over a long stretch of road or
 say plainly that the value is one pixel.
 
-**4. nodata is not consistent.** Most layers use `-3.4e38`, the ignition count
+**4. nodata is not consistent.** Most layers use `-3.4e38`, the ignition cause
 layers use `-128`, and **`ignitions_lightning` declares nodata as `15.0`** — a
 value inside the plausible data range rather than a sentinel. Masking it may drop
 real pixels; not masking it may admit fill. Check the histogram before trusting a
